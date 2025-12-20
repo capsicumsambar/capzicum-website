@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping List - Capzicum</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: white;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+        }
+        .list-item button {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .empty-message {
+            text-align: center;
+            color: #666;
+            padding: 40px;
+        }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🛒 Shopping List</h1>
+        <p>Your vegetarian-safe products</p>
+    </header>
+
+    <a href="index.html" class="back-link">← Back to Scanner</a>
+
+    <main id="list-container">
+    </main>
+
+    <script>
+        function renderList() {
+            const container = document.getElementById('list-container');
+            const list = JSON.parse(localStorage.getItem('shoppingList') || '[]');
+
+            if (list.length === 0) {
+                container.innerHTML = '<div class="empty-message">No items yet. Scan some products!</div>';
+                return;
+            }
+
+            container.innerHTML = list.map((item, index) => `
+                <div class="list-item">
+                    <span>${item.productName || item.barcode}</span>
+                    <button onclick="removeItem(${index})">Remove</button>
+                </div>
+            `).join('');
+        }
+
+        function removeItem(index) {
+            const list = JSON.parse(localStorage.getItem('shoppingList') || '[]');
+            list.splice(index, 1);
+            localStorage.setItem('shoppingList', JSON.stringify(list));
+            renderList();
+        }
+
+        renderList();
+    </script>
+</body>
+</html>
