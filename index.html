@@ -3,39 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Capzicum - Food Ingredient Scanner</title>
+    <title>Capzicum</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <header>
-        <h1>🌶️ Capzicum</h1>
-        <p>Check if packaged foods are vegetarian</p>
-    </header>
-
     <main>
-        <section class="scanner-section">
-            <label for="barcode">Enter barcode:</label>
-            <input type="text" id="barcode" placeholder="e.g., 041570054482" inputmode="numeric">
-            <button id="scan-btn">Check Ingredients</button>
-        </section>
-
-        <section id="result" class="result-section hidden">
-            <div id="product-name"></div>
-            <div id="status"></div>
-            <div id="flagged-ingredients"></div>
-            <button id="add-to-list" class="hidden">Add to Shopping List</button>
-        </section>
-
-        <section class="list-link">
-            <a href="list.html">View Shopping List</a>
-        </section>
+        <img src="icon.png" alt="Capzicum" class="logo">
+        <h1>Capzicum</h1>
+        <textarea id="ingredients" placeholder="Paste ingredients here..."></textarea>
+        <button id="scan-btn">Scan</button>
     </main>
-
-    <footer>
-        <a href="privacy.html">Privacy</a> | 
-        <a href="terms.html">Terms</a>
-    </footer>
-
     <script src="app.js"></script>
 </body>
 </html>
