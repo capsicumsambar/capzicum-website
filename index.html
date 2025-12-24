@@ -1,20 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Capzicum</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
     <main>
-        <div class="title-row">
-            <img src="icon.png" alt="Capzicum" class="logo">
-            <h1 style="font-family: Garamond; font-style: italic">Capzicum</h1>
-        </div>
-        <textarea id="ingredients" placeholder="Paste ingredients here..."></textarea>
-        <button id="scan-btn">Scan</button>
+      <div class="title-row">
+        <img src="icon.png" alt="Capzicum" class="logo" />
+        <h1 style="font-family: Georgia, Garamond, serif; font-style: italic">
+          Capzicum
+        </h1>
+      </div>
+      <p class="tagline">Premium grocery brand quality in your shopping list</p>
+      <textarea
+        id="ingredients"
+        placeholder="Paste ingredients here..."
+      ></textarea>
+      <button id="scan-btn">Scan</button>
+      <div id="results"></div>
     </main>
     <script src="app.js"></script>
-</body>
+  </body>
 </html>

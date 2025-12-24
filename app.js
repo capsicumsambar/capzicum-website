@@ -1,73 +1,90 @@
-const API_URL = 'https://capzicum.pythonanywhere.com/check';
+const API_URL = "https://capsicum.pythonanywhere.com/scan";
 
-document.getElementById('scan-btn').addEventListener('click', checkProduct);
-document.getElementById('barcode').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') checkProduct();
-});
+document.getElementById("scan-btn").addEventListener("click", checkIngredients);
 
-async function checkProduct() {
-    const barcode = document.getElementById('barcode').value.trim();
-    if (!barcode) return;
+async function checkIngredients() {
+  const ingredients = document.getElementById("ingredients").value.trim();
+  if (!ingredients) return;
 
-    const resultSection = document.getElementById('result');
-    const statusDiv = document.getElementById('status');
-    const productNameDiv = document.getElementById('product-name');
-    const flaggedDiv = document.getElementById('flagged-ingredients');
-    const addBtn = document.getElementById('add-to-list');
+  const btn = document.getElementById("scan-btn");
+  const resultsDiv = document.getElementById("results");
 
-    statusDiv.textContent = 'Checking...';
-    statusDiv.className = '';
-    resultSection.classList.remove('hidden');
-    productNameDiv.textContent = '';
-    flaggedDiv.textContent = '';
-    addBtn.classList.add('hidden');
+  btn.textContent = "Checking...";
+  btn.disabled = true;
+  resultsDiv.innerHTML = "";
 
-    try {
-        const response = await fetch(`${API_URL}?barcode=${barcode}`);
-        const data = await response.json();
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ ingredients: ingredients }),
+    });
 
-        if (data.error) {
-            statusDiv.textContent = data.error;
-            statusDiv.className = 'unknown';
-            return;
-        }
-
-        productNameDiv.textContent = data.product_name || 'Unknown Product';
-
-        if (data.status === 'safe') {
-            statusDiv.textContent = '✅ Vegetarian Safe';
-            statusDiv.className = 'safe';
-        } else if (data.status === 'not_safe') {
-            statusDiv.textContent = '❌ Not Vegetarian';
-            statusDiv.className = 'unsafe';
-            if (data.flagged_ingredients?.length) {
-                flaggedDiv.textContent = 'Contains: ' + data.flagged_ingredients.join(', ');
-            }
-        } else {
-            statusDiv.textContent = '⚠️ Unknown - Check manually';
-            statusDiv.className = 'unknown';
-        }
-
-        // Show add to list button for safe products
-        if (data.status === 'safe') {
-            addBtn.classList.remove('hidden');
-            addBtn.onclick = () => addToList(barcode, data.product_name);
-        }
-
-    } catch (error) {
-        statusDiv.textContent = 'Error connecting to server';
-        statusDiv.className = 'unknown';
-    }
+    const data = await response.json();
+    displayResults(data);
+  } catch (error) {
+    resultsDiv.innerHTML = '<p class="error">Error connecting to server</p>';
+  } finally {
+    btn.textContent = "Scan";
+    btn.disabled = false;
+  }
 }
 
-function addToList(barcode, productName) {
-    const list = JSON.parse(localStorage.getItem('shoppingList') || '[]');
-    
-    if (!list.some(item => item.barcode === barcode)) {
-        list.push({ barcode, productName, addedAt: new Date().toISOString() });
-        localStorage.setItem('shoppingList', JSON.stringify(list));
-        alert('Added to shopping list!');
-    } else {
-        alert('Already in your list');
-    }
+function displayResults(data) {
+  const resultsDiv = document.getElementById("results");
+
+  if (data.banned_count === 0) {
+    resultsDiv.innerHTML = `
+      <div class="results-card">
+        <div class="results-header safe">✓ No flagged ingredients found</div>
+      </div>
+    `;
+    return;
+  }
+
+  let rowsHtml = "";
+
+  for (const item of data.banned_ingredients) {
+    const orgs = Array.isArray(item.organizations)
+      ? item.organizations
+      : [item.organizations];
+    const tagsHtml = orgs
+      .map((org) => `<span class="org-tag">${org}</span>`)
+      .join("");
+
+    rowsHtml += `
+      <div class="results-row">
+        <div class="ingredient-info">
+          <div class="ingredient-name">${item.name}</div>
+          <div class="ingredient-match">Found as: ${item.matched_terms.join(
+            ", "
+          )}</div>
+        </div>
+        <div class="org-tags">${tagsHtml}</div>
+      </div>
+    `;
+  }
+
+  resultsDiv.innerHTML = `
+    <div class="results-card">
+      <div class="results-header">
+        ${data.banned_count} ingredient${
+    data.banned_count > 1 ? "s" : ""
+  } flagged in <strong>Capzicum</strong>
+      </div>
+      <div class="results-table-header">
+        <span>Ingredient</span>
+        <span>In the avoid list of</span>
+      </div>
+      <div class="results-table">
+        ${rowsHtml}
+      </div>
+      <div class="disclaimer">
+        <span class="disclaimer-icon">ℹ</span>
+        <span>For informational purposes only. Tap for more.</span>
+      </div>
+    </div>
+  `;
 }
