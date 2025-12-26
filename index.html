@@ -6,6 +6,10 @@
     <title>Capzicum</title>
     <link rel="stylesheet" href="styles.css" />
     <script src="https://js.puter.com/v2/"></script>
+    <script
+      src="https://unpkg.com/html5-qrcode"
+      type="text/javascript"
+    ></script>
   </head>
   <body>
     <main>
@@ -16,6 +20,16 @@
         </h1>
       </div>
       <p class="tagline">Premium grocery brand quality in your shopping list</p>
+      <button
+        id="barcode-btn"
+        style="margin-bottom: 10px; background-color: #4caf50"
+      >
+        📶 Scan Barcode (Fast)
+      </button>
+      <div
+        id="reader"
+        style="width: 100%; display: none; margin-bottom: 15px"
+      ></div>
       <input
         type="file"
         id="camera-input"

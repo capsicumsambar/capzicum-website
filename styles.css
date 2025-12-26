@@ -191,3 +191,11 @@ footer {
   display: flex;
   justify-content: space-between;
 }
+
+/* Make the camera video look nice */
+#reader video {
+  border-radius: 12px; /* Rounded corners */
+  object-fit: cover; /* Fill the area nicely */
+  border: 2px solid #4caf50; /* Green border matching the button */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}

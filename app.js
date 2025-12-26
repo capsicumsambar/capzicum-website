@@ -4,6 +4,82 @@ const cameraInput = document.getElementById("camera-input");
 const ingredientsBox = document.getElementById("ingredients");
 const scanBtn = document.getElementById("scan-btn");
 
+// --- NEW BARCODE LOGIC ---
+const barcodeBtn = document.getElementById("barcode-btn");
+const readerDiv = document.getElementById("reader");
+let html5QrCode; // Stores the scanner instance
+
+barcodeBtn.addEventListener("click", () => {
+  // Toggle: If box is open, close it. If closed, open it.
+  if (readerDiv.style.display === "block") {
+    stopScanner();
+    return;
+  }
+
+  startScanner();
+});
+
+function startScanner() {
+  readerDiv.style.display = "block";
+  barcodeBtn.textContent = "❌ Stop Camera";
+  ingredientsBox.value = "Point camera at a barcode...";
+
+  html5QrCode = new Html5Qrcode("reader");
+
+  // Config: Use rear camera, scan 10 times/sec
+  const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+  html5QrCode
+    .start(
+      { facingMode: "environment" },
+      config,
+      onScanSuccess // Function to run when barcode is found
+    )
+    .catch((err) => {
+      console.error("Camera Error:", err);
+      ingredientsBox.value = "Camera error. Please allow permissions.";
+      stopScanner();
+    });
+}
+
+function stopScanner() {
+  if (html5QrCode) {
+    html5QrCode
+      .stop()
+      .then(() => {
+        html5QrCode.clear();
+        readerDiv.style.display = "none";
+        barcodeBtn.textContent = "📶 Scan Barcode (Fast)";
+      })
+      .catch((err) => console.error("Stop failed", err));
+  }
+}
+
+async function onScanSuccess(decodedText) {
+  // 1. Success! Stop the camera immediately.
+  stopScanner();
+
+  ingredientsBox.value = `Barcode: ${decodedText}. Searching database...`;
+
+  // 2. Fetch from OpenFoodFacts (using the helper we added earlier)
+  const product = await fetchProductDetails(decodedText);
+
+  if (product && product.ingredients) {
+    // Found it! Fill and Scan.
+    ingredientsBox.value = product.ingredients;
+    // Optional: Show toast or small alert of product name
+    // alert(`Found: ${product.name}`);
+    scanBtn.click();
+  } else {
+    // Not found or no ingredients
+    ingredientsBox.value = "";
+    alert(
+      "Product not found (or has no ingredients listed). Please use 'Read Label' to scan text manually."
+    );
+  }
+}
+// --- END BARCODE LOGIC ---
+
 // 1. Connect "Read Label" button to the hidden camera
 ocrBtn.addEventListener("click", () => {
   cameraInput.click();
@@ -138,6 +214,44 @@ function displayResults(data) {
       </div>
     </div>
   `;
+}
+
+// Helper: Fetch details from OpenFoodFacts
+async function fetchProductDetails(barcode) {
+  // 1. Construct URL (Asking for specific fields saves bandwidth)
+  const url = `https://world.openfoodfacts.org/api/v2/product/${barcode}.json?fields=product_name,ingredients_text,ingredients_text_en,image_front_small_url,status`;
+
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        // IMPORTANT: Identify yourself to avoid being blocked
+        "User-Agent": "Capzicum - Web - Version 1.0 - www.capzicum.com",
+      },
+    });
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+
+    // 2. Check if product exists (status 1 = found)
+    if (data.status === 1 && data.product) {
+      return {
+        name: data.product.product_name || "Unknown Product",
+        // Prefer English, fall back to generic, or empty string
+        ingredients:
+          data.product.ingredients_text_en ||
+          data.product.ingredients_text ||
+          "",
+        image: data.product.image_front_small_url || "",
+      };
+    }
+
+    return null; // Product not found
+  } catch (error) {
+    console.error("OFF API Error:", error);
+    return null;
+  }
 }
 
 // Helper: Resize image to speed up upload & processing
