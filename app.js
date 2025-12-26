@@ -1,3 +1,53 @@
+// --- START OF NEW SCANNING CODE ---
+const ocrBtn = document.getElementById("ocr-btn");
+const cameraInput = document.getElementById("camera-input");
+const ingredientsBox = document.getElementById("ingredients");
+const scanBtn = document.getElementById("scan-btn");
+
+// 1. Connect "Read Label" button to the hidden camera
+ocrBtn.addEventListener("click", () => {
+  cameraInput.click();
+});
+
+// 2. When a photo is taken, run the AI
+cameraInput.addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  // UI Feedback: Show user something is happening
+  ocrBtn.textContent = "⏳ Reading...";
+  ocrBtn.disabled = true;
+  ingredientsBox.value = "Scanning label... please wait...";
+
+  try {
+    // 3. Send to Puter AI with "Ignore Distractions" prompt
+    const response = await puter.ai.chat(
+      `Look at this image of a food product. Find the section labeled 'Ingredients'. 
+             Extract and output ONLY the text of the ingredients list. 
+             Ignore nutrition facts, barcodes, and branding.`,
+      file
+    );
+
+    // 4. Fill the box with the result
+    // Puter usually returns an object, we want the text content
+    const text = response.message?.content || response;
+    ingredientsBox.value = text.trim();
+
+    // 5. Automatically click the existing "Scan" button
+    scanBtn.click();
+  } catch (error) {
+    console.error("OCR Error:", error);
+    ingredientsBox.value = "Could not read text. Please try again.";
+  } finally {
+    // Reset button state
+    ocrBtn.textContent = "📸 Read Label";
+    ocrBtn.disabled = false;
+    // Clear the input so you can scan the same file again if needed
+    cameraInput.value = "";
+  }
+});
+// --- END OF NEW SCANNING CODE ---
+
 const API_URL = "https://capsicum.pythonanywhere.com/scan";
 
 document.getElementById("scan-btn").addEventListener("click", checkIngredients);

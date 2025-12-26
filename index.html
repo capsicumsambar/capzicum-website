@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Capzicum</title>
     <link rel="stylesheet" href="styles.css" />
+    <script src="https://js.puter.com/v2/"></script>
   </head>
   <body>
     <main>
@@ -15,6 +16,15 @@
         </h1>
       </div>
       <p class="tagline">Premium grocery brand quality in your shopping list</p>
+      <input
+        type="file"
+        id="camera-input"
+        accept="image/*"
+        capture="environment"
+        style="display: none"
+      />
+
+      <button id="ocr-btn" style="margin-bottom: 10px">📸 Read Label</button>
       <textarea
         id="ingredients"
         placeholder="Paste ingredients here..."
