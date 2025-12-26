@@ -9,43 +9,44 @@ ocrBtn.addEventListener("click", () => {
   cameraInput.click();
 });
 
-// 2. When a photo is taken, run the AI
+// 2. When a photo is taken, run the AI (Optimized)
 cameraInput.addEventListener("change", async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+  const originalFile = e.target.files[0];
+  if (!originalFile) return;
 
-  // UI Feedback: Show user something is happening
-  ocrBtn.textContent = "⏳ Reading...";
+  // UI Feedback
+  ocrBtn.textContent = "⏳ Compressing...";
   ocrBtn.disabled = true;
-  ingredientsBox.value = "Scanning label... please wait...";
+  ingredientsBox.value = "Preparing image...";
 
   try {
-    // 3. Send to Puter AI with "Ignore Distractions" prompt
+    // A. Resize the image first (Speed Boost!)
+    const file = await resizeImage(originalFile);
+
+    ocrBtn.textContent = "⏳ Reading...";
+    ingredientsBox.value = "Scanning label...";
+
+    // B. Send to Puter AI (Slightly shorter prompt for speed)
     const response = await puter.ai.chat(
-      `Look at this image of a food product. Find the section labeled 'Ingredients'. 
-             Extract and output ONLY the text of the ingredients list. 
-             Ignore nutrition facts, barcodes, and branding.`,
+      `Read the 'Ingredients' section from this food label. Output ONLY the raw ingredient text.`,
       file
     );
 
-    // 4. Fill the box with the result
-    // Puter usually returns an object, we want the text content
     const text = response.message?.content || response;
     ingredientsBox.value = text.trim();
 
-    // 5. Automatically click the existing "Scan" button
+    // C. Auto-click Scan
     scanBtn.click();
   } catch (error) {
     console.error("OCR Error:", error);
-    ingredientsBox.value = "Could not read text. Please try again.";
+    ingredientsBox.value = "Error reading text. Try again.";
   } finally {
-    // Reset button state
     ocrBtn.textContent = "📸 Read Label";
     ocrBtn.disabled = false;
-    // Clear the input so you can scan the same file again if needed
     cameraInput.value = "";
   }
 });
+
 // --- END OF NEW SCANNING CODE ---
 
 const API_URL = "https://capsicum.pythonanywhere.com/scan";
@@ -137,4 +138,38 @@ function displayResults(data) {
       </div>
     </div>
   `;
+}
+
+// Helper: Resize image to speed up upload & processing
+function resizeImage(file, maxWidth = 1000) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = maxWidth / img.width;
+        if (scale >= 1) {
+          resolve(file);
+          return;
+        } // No resize needed
+
+        const canvas = document.createElement("canvas");
+        canvas.width = maxWidth;
+        canvas.height = img.height * scale;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob(
+          (blob) => {
+            resolve(new File([blob], file.name, { type: file.type }));
+          },
+          file.type,
+          0.8
+        ); // 0.8 quality is plenty for text
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
 }
