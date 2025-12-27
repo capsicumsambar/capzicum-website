@@ -20,30 +20,33 @@
         </h1>
       </div>
       <p class="tagline">Premium grocery brand quality in your shopping list</p>
-      <button
-        id="barcode-btn"
-        style="margin-bottom: 10px; background-color: #4caf50"
-      >
-        📶 Scan Barcode (Fast)
-      </button>
-      <div
-        id="reader"
-        style="width: 100%; display: none; margin-bottom: 15px"
-      ></div>
-      <input
-        type="file"
-        id="camera-input"
-        accept="image/*"
-        capture="environment"
-        style="display: none"
-      />
 
-      <button id="ocr-btn" style="margin-bottom: 10px">📸 Read Label</button>
+      <div id="desktop-msg" class="desktop-only-msg">
+        📱 Please open on a mobile phone to scan products.
+      </div>
+
+      <div id="mobile-tools" class="action-buttons">
+        <button id="barcode-btn">📶 Scan Barcode (Fast)</button>
+        <div id="reader"></div>
+
+        <button id="ocr-btn">📸 Read Label (Backup)</button>
+        <input
+          type="file"
+          id="camera-input"
+          accept="image/*"
+          capture="environment"
+          style="display: none"
+        />
+      </div>
+
       <textarea
         id="ingredients"
         placeholder="Paste ingredients here..."
       ></textarea>
-      <button id="scan-btn">Scan</button>
+
+      <div class="helper-text">Check text accuracy above before scanning.</div>
+
+      <button id="scan-btn">Scan Ingredients</button>
       <div id="results"></div>
     </main>
     <script src="app.js"></script>

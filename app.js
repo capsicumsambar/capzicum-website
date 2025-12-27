@@ -1,23 +1,25 @@
-// --- START OF NEW SCANNING CODE ---
+// Global Elements
 const ocrBtn = document.getElementById("ocr-btn");
 const cameraInput = document.getElementById("camera-input");
 const ingredientsBox = document.getElementById("ingredients");
 const scanBtn = document.getElementById("scan-btn");
-
-// --- NEW BARCODE LOGIC ---
 const barcodeBtn = document.getElementById("barcode-btn");
 const readerDiv = document.getElementById("reader");
+const API_URL = "https://capsicum.pythonanywhere.com/scan";
+
 let html5QrCode; // Stores the scanner instance
 
-barcodeBtn.addEventListener("click", () => {
-  // Toggle: If box is open, close it. If closed, open it.
-  if (readerDiv.style.display === "block") {
-    stopScanner();
-    return;
-  }
-
-  startScanner();
-});
+// --- 1. BARCODE SCANNER LOGIC ---
+if (barcodeBtn) {
+  barcodeBtn.addEventListener("click", () => {
+    // Toggle: If box is open, close it. If closed, open it.
+    if (readerDiv.style.display === "block") {
+      stopScanner();
+      return;
+    }
+    startScanner();
+  });
+}
 
 function startScanner() {
   readerDiv.style.display = "block";
@@ -26,15 +28,18 @@ function startScanner() {
 
   html5QrCode = new Html5Qrcode("reader");
 
-  // Config: Use rear camera, scan 10 times/sec
-  const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+  // Config: Use rear camera, 10fps, native chip support
+  const config = {
+    fps: 10,
+    qrbox: { width: 300, height: 150 }, // Wide box for barcodes
+    aspectRatio: 1.0,
+    experimentalFeatures: {
+      useBarCodeDetectorIfSupported: true, // Uses Android Native Chip
+    },
+  };
 
   html5QrCode
-    .start(
-      { facingMode: "environment" },
-      config,
-      onScanSuccess // Function to run when barcode is found
-    )
+    .start({ facingMode: "environment" }, config, onScanSuccess)
     .catch((err) => {
       console.error("Camera Error:", err);
       ingredientsBox.value = "Camera error. Please allow permissions.";
@@ -56,106 +61,93 @@ function stopScanner() {
 }
 
 async function onScanSuccess(decodedText) {
-  // 1. Success! Stop the camera immediately.
   stopScanner();
-
   ingredientsBox.value = `Barcode: ${decodedText}. Searching database...`;
 
-  // 2. Fetch from OpenFoodFacts (using the helper we added earlier)
   const product = await fetchProductDetails(decodedText);
 
   if (product && product.ingredients) {
-    // Found it! Fill and Scan.
     ingredientsBox.value = product.ingredients;
-    // Optional: Show toast or small alert of product name
-    // alert(`Found: ${product.name}`);
+    // Auto-click the scan button
     scanBtn.click();
   } else {
-    // Not found or no ingredients
     ingredientsBox.value = "";
-    alert(
-      "Product not found (or has no ingredients listed). Please use 'Read Label' to scan text manually."
-    );
+    alert("Product not found. Please use 'Read Label' to scan text manually.");
   }
 }
-// --- END BARCODE LOGIC ---
 
-// 1. Connect "Read Label" button to the hidden camera
-ocrBtn.addEventListener("click", () => {
-  cameraInput.click();
-});
+// --- 2. OCR (AI) SCANNER LOGIC ---
+if (ocrBtn) {
+  ocrBtn.addEventListener("click", () => {
+    cameraInput.click();
+  });
+}
 
-// 2. When a photo is taken, run the AI (Optimized)
-cameraInput.addEventListener("change", async (e) => {
-  const originalFile = e.target.files[0];
-  if (!originalFile) return;
+if (cameraInput) {
+  cameraInput.addEventListener("change", async (e) => {
+    const originalFile = e.target.files[0];
+    if (!originalFile) return;
 
-  // UI Feedback
-  ocrBtn.textContent = "⏳ Compressing...";
-  ocrBtn.disabled = true;
-  ingredientsBox.value = "Preparing image...";
+    // UI Feedback
+    ocrBtn.textContent = "⏳ Compressing...";
+    ocrBtn.disabled = true;
+    ingredientsBox.value = "Preparing image...";
 
-  try {
-    // A. Resize the image first (Speed Boost!)
-    const file = await resizeImage(originalFile);
+    try {
+      // A. Resize (Speed Boost)
+      const file = await resizeImage(originalFile);
 
-    ocrBtn.textContent = "⏳ Reading...";
-    ingredientsBox.value = "Scanning label...";
+      ocrBtn.textContent = "⏳ Reading...";
+      ingredientsBox.value = "Scanning label...";
 
-    // B. Send to Puter AI (Slightly shorter prompt for speed)
-    const response = await puter.ai.chat(
-      `Read the 'Ingredients' section from this food label. Output ONLY the raw ingredient text.`,
-      file
-    );
+      // B. Send to Puter AI
+      const response = await puter.ai.chat(
+        `Read the 'Ingredients' section from this food label. Output ONLY the raw ingredient text.`,
+        file
+      );
 
-    const text = response.message?.content || response;
-    ingredientsBox.value = text.trim();
+      const text = response.message?.content || response;
+      ingredientsBox.value = text.trim();
 
-    // C. Auto-click Scan
-    scanBtn.click();
-  } catch (error) {
-    console.error("OCR Error:", error);
-    ingredientsBox.value = "Error reading text. Try again.";
-  } finally {
-    ocrBtn.textContent = "📸 Read Label";
-    ocrBtn.disabled = false;
-    cameraInput.value = "";
-  }
-});
+      // C. Auto-click Scan
+      scanBtn.click();
+    } catch (error) {
+      console.error("OCR Error:", error);
+      ingredientsBox.value = "Error reading text. Try again.";
+    } finally {
+      ocrBtn.textContent = "📸 Read Label (Backup)";
+      ocrBtn.disabled = false;
+      cameraInput.value = "";
+    }
+  });
+}
 
-// --- END OF NEW SCANNING CODE ---
-
-const API_URL = "https://capsicum.pythonanywhere.com/scan";
-
-document.getElementById("scan-btn").addEventListener("click", checkIngredients);
+// --- 3. MAIN SCAN LOGIC (Existing Backend) ---
+scanBtn.addEventListener("click", checkIngredients);
 
 async function checkIngredients() {
-  const ingredients = document.getElementById("ingredients").value.trim();
+  const ingredients = ingredientsBox.value.trim();
   if (!ingredients) return;
 
-  const btn = document.getElementById("scan-btn");
-  const resultsDiv = document.getElementById("results");
-
-  btn.textContent = "Checking...";
-  btn.disabled = true;
-  resultsDiv.innerHTML = "";
+  scanBtn.textContent = "Checking...";
+  scanBtn.disabled = true;
+  document.getElementById("results").innerHTML = "";
 
   try {
     const response = await fetch(API_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ingredients: ingredients }),
     });
 
     const data = await response.json();
     displayResults(data);
   } catch (error) {
-    resultsDiv.innerHTML = '<p class="error">Error connecting to server</p>';
+    document.getElementById("results").innerHTML =
+      '<p class="error">Error connecting to server</p>';
   } finally {
-    btn.textContent = "Scan";
-    btn.disabled = false;
+    scanBtn.textContent = "Scan Ingredients";
+    scanBtn.disabled = false;
   }
 }
 
@@ -172,7 +164,6 @@ function displayResults(data) {
   }
 
   let rowsHtml = "";
-
   for (const item of data.banned_ingredients) {
     const orgs = Array.isArray(item.organizations)
       ? item.organizations
@@ -216,29 +207,26 @@ function displayResults(data) {
   `;
 }
 
+// --- 4. HELPERS ---
+
 // Helper: Fetch details from OpenFoodFacts
 async function fetchProductDetails(barcode) {
-  // 1. Construct URL (Asking for specific fields saves bandwidth)
   const url = `https://world.openfoodfacts.org/api/v2/product/${barcode}.json?fields=product_name,ingredients_text,ingredients_text_en,image_front_small_url,status`;
 
   try {
     const response = await fetch(url, {
       method: "GET",
       headers: {
-        // IMPORTANT: Identify yourself to avoid being blocked
         "User-Agent": "Capzicum - Web - Version 1.0 - www.capzicum.com",
       },
     });
 
     if (!response.ok) return null;
-
     const data = await response.json();
 
-    // 2. Check if product exists (status 1 = found)
     if (data.status === 1 && data.product) {
       return {
         name: data.product.product_name || "Unknown Product",
-        // Prefer English, fall back to generic, or empty string
         ingredients:
           data.product.ingredients_text_en ||
           data.product.ingredients_text ||
@@ -246,15 +234,14 @@ async function fetchProductDetails(barcode) {
         image: data.product.image_front_small_url || "",
       };
     }
-
-    return null; // Product not found
+    return null;
   } catch (error) {
     console.error("OFF API Error:", error);
     return null;
   }
 }
 
-// Helper: Resize image to speed up upload & processing
+// Helper: Resize image
 function resizeImage(file, maxWidth = 1000) {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -265,7 +252,7 @@ function resizeImage(file, maxWidth = 1000) {
         if (scale >= 1) {
           resolve(file);
           return;
-        } // No resize needed
+        }
 
         const canvas = document.createElement("canvas");
         canvas.width = maxWidth;
@@ -280,10 +267,28 @@ function resizeImage(file, maxWidth = 1000) {
           },
           file.type,
           0.8
-        ); // 0.8 quality is plenty for text
+        );
       };
       img.src = e.target.result;
     };
     reader.readAsDataURL(file);
   });
 }
+
+// Helper: Check Device (Hide scanners on Desktop)
+function checkDevice() {
+  const isMobile =
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
+  const toolsDiv = document.getElementById("mobile-tools");
+  const msgDiv = document.getElementById("desktop-msg");
+
+  if (!isMobile) {
+    if (toolsDiv) toolsDiv.style.display = "none";
+    if (msgDiv) msgDiv.style.display = "block";
+  }
+}
+
+// Run device check on load
+checkDevice();
