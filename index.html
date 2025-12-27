@@ -27,9 +27,15 @@
 
       <div id="mobile-tools" class="action-buttons">
         <button id="barcode-btn">📶 Scan Barcode (Fast)</button>
+        <small class="hint-text">
+          Focus takes 2-3s. Data from OpenFoodFacts API.
+        </small>
         <div id="reader"></div>
 
-        <button id="ocr-btn">📸 Read Label (Backup)</button>
+        <button id="ocr-btn">📸 Scan Text (OCR)</button>
+        <small class="hint-text">
+          Uses AI to read text. Takes ~5-8 seconds.
+        </small>
         <input
           type="file"
           id="camera-input"
@@ -41,13 +47,32 @@
 
       <textarea
         id="ingredients"
-        placeholder="Paste ingredients here..."
+        placeholder="Paste or scan ingredients here..."
       ></textarea>
-
       <div class="helper-text">Check text accuracy above before scanning.</div>
 
-      <button id="scan-btn">Scan Ingredients</button>
+      <div class="scan-row">
+        <input
+          type="text"
+          id="product-name"
+          placeholder="Product Name (Optional)"
+        />
+        <button id="scan-btn">Scan</button>
+      </div>
+
       <div id="results"></div>
+
+      <button
+        id="add-list-btn"
+        style="display: none; margin-top: 10px; background-color: #f57c00"
+      >
+        📝 Add to Shopping List
+      </button>
+
+      <div class="shopping-list-container">
+        <h3>My Shopping List</h3>
+        <div id="shopping-list-items"></div>
+      </div>
     </main>
     <script src="app.js"></script>
   </body>

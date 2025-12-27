@@ -2,17 +2,19 @@
 const ocrBtn = document.getElementById("ocr-btn");
 const cameraInput = document.getElementById("camera-input");
 const ingredientsBox = document.getElementById("ingredients");
+const nameBox = document.getElementById("product-name"); // New
 const scanBtn = document.getElementById("scan-btn");
 const barcodeBtn = document.getElementById("barcode-btn");
 const readerDiv = document.getElementById("reader");
+const addListBtn = document.getElementById("add-list-btn"); // New
+const listContainer = document.getElementById("shopping-list-items"); // New
 const API_URL = "https://capsicum.pythonanywhere.com/scan";
 
-let html5QrCode; // Stores the scanner instance
+let html5QrCode;
 
-// --- 1. BARCODE SCANNER LOGIC (ROBUST MODE) ---
+// --- 1. BARCODE SCANNER LOGIC ---
 if (barcodeBtn) {
   barcodeBtn.addEventListener("click", () => {
-    // Toggle: If box is open, close it. If closed, open it.
     if (readerDiv.style.display === "block") {
       stopScanner();
       return;
@@ -28,11 +30,7 @@ function startScanner() {
 
   html5QrCode = new Html5Qrcode("reader");
 
-  // CONFIG: Reverted to square box, standard speed. More reliable.
-  const config = {
-    fps: 10,
-    qrbox: { width: 250, height: 250 },
-  };
+  const config = { fps: 10, qrbox: { width: 250, height: 250 } };
 
   html5QrCode
     .start({ facingMode: "environment" }, config, onScanSuccess)
@@ -58,25 +56,25 @@ function stopScanner() {
 
 async function onScanSuccess(decodedText) {
   stopScanner();
-  ingredientsBox.value = `Barcode: ${decodedText}. Searching database...`;
+  ingredientsBox.value = `Barcode: ${decodedText}. Searching...`;
 
   const product = await fetchProductDetails(decodedText);
 
   if (product && product.ingredients) {
+    // Fill BOTH Name and Ingredients
     ingredientsBox.value = product.ingredients;
-    // Auto-click the scan button
+    if (product.name) nameBox.value = product.name;
+
     scanBtn.click();
   } else {
     ingredientsBox.value = "";
-    alert("Product not found. Please use 'Read Label' to scan text manually.");
+    alert("Product not found. Please use 'Scan Text (OCR)'.");
   }
 }
 
 // --- 2. OCR (AI) SCANNER LOGIC ---
 if (ocrBtn) {
-  ocrBtn.addEventListener("click", () => {
-    cameraInput.click();
-  });
+  ocrBtn.addEventListener("click", () => cameraInput.click());
 }
 
 if (cameraInput) {
@@ -84,41 +82,98 @@ if (cameraInput) {
     const originalFile = e.target.files[0];
     if (!originalFile) return;
 
-    // UI Feedback
-    ocrBtn.textContent = "⏳ Compressing...";
+    ocrBtn.textContent = "⏳ Processing...";
     ocrBtn.disabled = true;
-    ingredientsBox.value = "Preparing image...";
+    ingredientsBox.value = "AI is reading name & ingredients (~6s)...";
 
     try {
-      // A. Resize (Speed Boost)
       const file = await resizeImage(originalFile);
 
-      ocrBtn.textContent = "⏳ Reading...";
-      ingredientsBox.value = "Scanning label...";
-
-      // B. Send to Puter AI
+      // UPDATED PROMPT: Ask for JSON to separate Name and Ingredients
       const response = await puter.ai.chat(
-        `Read the 'Ingredients' section from this food label. Output ONLY the raw ingredient text.`,
+        `Look at this food label. Extract: 
+         1. The Product Name (brand + type).
+         2. The Ingredients List.
+         Return ONLY a valid JSON object like this: {"name": "...", "ingredients": "..."}`,
         file
       );
 
-      const text = response.message?.content || response;
-      ingredientsBox.value = text.trim();
+      const content = response.message?.content || response;
 
-      // C. Auto-click Scan
+      // Parse JSON from AI
+      try {
+        // AI sometimes puts markdown ```json ... ``` wrapper, strip it
+        const cleanJson = content.replace(/```json|```/g, "").trim();
+        const data = JSON.parse(cleanJson);
+
+        ingredientsBox.value = data.ingredients || "";
+        nameBox.value = data.name || "Unknown Product";
+      } catch (jsonErr) {
+        // Fallback if AI didn't give strict JSON
+        ingredientsBox.value = content;
+      }
+
       scanBtn.click();
     } catch (error) {
       console.error("OCR Error:", error);
-      ingredientsBox.value = "Error reading text. Try again.";
+      ingredientsBox.value = "Error reading text.";
     } finally {
-      ocrBtn.textContent = "📸 Read Label (Backup)";
+      ocrBtn.textContent = "📸 Scan Text (OCR)";
       ocrBtn.disabled = false;
       cameraInput.value = "";
     }
   });
 }
 
-// --- 3. MAIN SCAN LOGIC (Existing Backend) ---
+// --- 3. SHOPPING LIST LOGIC (NEW) ---
+
+// Load list on startup
+document.addEventListener("DOMContentLoaded", renderShoppingList);
+
+// Add Button Logic
+addListBtn.addEventListener("click", () => {
+  const name = nameBox.value.trim() || "Unknown Item";
+  const ingredients = ingredientsBox.value.trim(); // Optional: store this?
+
+  // Save to LocalStorage
+  const list = JSON.parse(localStorage.getItem("shoppingList") || "[]");
+  list.push({ id: Date.now(), name: name });
+  localStorage.setItem("shoppingList", JSON.stringify(list));
+
+  renderShoppingList();
+  alert(`Added "${name}" to list!`);
+});
+
+function renderShoppingList() {
+  const list = JSON.parse(localStorage.getItem("shoppingList") || "[]");
+  listContainer.innerHTML = "";
+
+  if (list.length === 0) {
+    listContainer.innerHTML =
+      '<p style="color:#999; font-style:italic;">List is empty.</p>';
+    return;
+  }
+
+  list.forEach((item) => {
+    const div = document.createElement("div");
+    div.className = "list-item";
+    div.innerHTML = `
+            <span>${item.name}</span>
+            <button class="delete-btn" onclick="deleteItem(${item.id})">🗑</button>
+        `;
+    listContainer.appendChild(div);
+  });
+}
+
+// Make delete function global so onclick works
+window.deleteItem = function (id) {
+  let list = JSON.parse(localStorage.getItem("shoppingList") || "[]");
+  list = list.filter((item) => item.id !== id);
+  localStorage.setItem("shoppingList", JSON.stringify(list));
+  renderShoppingList();
+};
+
+// --- 4. MAIN SCAN LOGIC ---
 scanBtn.addEventListener("click", checkIngredients);
 
 async function checkIngredients() {
@@ -128,6 +183,7 @@ async function checkIngredients() {
   scanBtn.textContent = "Checking...";
   scanBtn.disabled = true;
   document.getElementById("results").innerHTML = "";
+  addListBtn.style.display = "none"; // Hide add button while scanning
 
   try {
     const response = await fetch(API_URL, {
@@ -138,6 +194,9 @@ async function checkIngredients() {
 
     const data = await response.json();
     displayResults(data);
+
+    // Show "Add to List" button after successful scan
+    addListBtn.style.display = "block";
   } catch (error) {
     document.getElementById("results").innerHTML =
       '<p class="error">Error connecting to server</p>';
@@ -148,6 +207,8 @@ async function checkIngredients() {
 }
 
 function displayResults(data) {
+  // ... (Your existing displayResults function remains unchanged) ...
+  // Paste the SAME displayResults function from previous version here
   const resultsDiv = document.getElementById("results");
 
   if (data.banned_count === 0) {
@@ -203,9 +264,7 @@ function displayResults(data) {
   `;
 }
 
-// --- 4. HELPERS ---
-
-// Helper: Fetch details from OpenFoodFacts
+// --- 5. HELPERS ---
 async function fetchProductDetails(barcode) {
   const url = `https://world.openfoodfacts.org/api/v2/product/${barcode}.json?fields=product_name,ingredients_text,ingredients_text_en,image_front_small_url,status`;
 
@@ -237,7 +296,6 @@ async function fetchProductDetails(barcode) {
   }
 }
 
-// Helper: Resize image
 function resizeImage(file, maxWidth = 1000) {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -249,14 +307,11 @@ function resizeImage(file, maxWidth = 1000) {
           resolve(file);
           return;
         }
-
         const canvas = document.createElement("canvas");
         canvas.width = maxWidth;
         canvas.height = img.height * scale;
-
         const ctx = canvas.getContext("2d");
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
         canvas.toBlob(
           (blob) => {
             resolve(new File([blob], file.name, { type: file.type }));
@@ -271,7 +326,6 @@ function resizeImage(file, maxWidth = 1000) {
   });
 }
 
-// Helper: Check Device (Hide scanners on Desktop)
 function checkDevice() {
   const isMobile =
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
@@ -281,15 +335,11 @@ function checkDevice() {
   const msgDiv = document.getElementById("desktop-msg");
 
   if (isMobile) {
-    // Show tools, hide warning
     if (toolsDiv) toolsDiv.style.display = "flex";
     if (msgDiv) msgDiv.style.display = "none";
   } else {
-    // Show warning, hide tools (Default CSS might already do this, but this reinforces it)
     if (toolsDiv) toolsDiv.style.display = "none";
     if (msgDiv) msgDiv.style.display = "block";
   }
 }
-
-// Run device check on load
 checkDevice();
