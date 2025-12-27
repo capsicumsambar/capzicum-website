@@ -19,7 +19,7 @@ body {
 
 main {
   width: 100%;
-  max-width: 480px; /* Mobile width constraint */
+  max-width: 480px;
   background: var(--card-bg);
   padding: 20px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -83,7 +83,7 @@ button:active {
   transform: scale(0.98);
 }
 
-/* Unified Scanner Buttons (Both Teal) */
+/* Unified Scanner Buttons */
 #barcode-btn,
 #ocr-btn {
   background-color: var(--primary-color);
@@ -96,7 +96,6 @@ button:active {
   opacity: 1;
 }
 
-/* Disabled State */
 button:disabled {
   background-color: #e0e0e0 !important;
   color: #9e9e9e !important;
@@ -117,7 +116,6 @@ textarea {
   box-sizing: border-box;
 }
 
-/* Helper Text */
 .helper-text {
   font-size: 0.8rem;
   color: #666;
@@ -127,16 +125,15 @@ textarea {
   font-style: italic;
 }
 
-/* Main 'Scan/Check' Button */
+/* Main Scan Button */
 #scan-btn {
-  background-color: #333; /* Dark/Neutral */
+  background-color: #333;
   color: white;
   margin-top: 5px;
 }
 
-/* Desktop Warning Message */
+/* Desktop Warning - Visible by default, hidden on mobile via JS */
 .desktop-only-msg {
-  display: none; /* Hidden by default */
   background-color: #e3f2fd;
   color: #0277bd;
   padding: 12px;
@@ -155,4 +152,115 @@ textarea {
   margin-bottom: 15px;
   display: none;
   border: 2px solid var(--primary-color);
+}
+
+/* --- RESULT CARD STYLES (Restored) --- */
+#results {
+  width: 100%;
+  margin-top: 20px;
+}
+
+.results-card {
+  width: 100%;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #fff;
+}
+
+.results-header {
+  background-color: #d32f2f; /* Red for warnings */
+  color: white;
+  padding: 12px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.results-header.safe {
+  background-color: #388e3c; /* Green for safe */
+}
+
+.results-table-header {
+  display: flex;
+  background-color: #f5f5f5;
+  padding: 8px 12px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #666;
+  border-bottom: 1px solid #eee;
+}
+
+.results-table-header span:first-child {
+  flex: 1;
+}
+
+.results-table {
+  display: flex;
+  flex-direction: column;
+}
+
+.results-row {
+  display: flex;
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  gap: 10px;
+}
+
+.results-row:last-child {
+  border-bottom: none;
+}
+
+.ingredient-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.ingredient-name {
+  font-weight: bold;
+  color: #d32f2f;
+}
+
+.ingredient-match {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.org-tags {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+}
+
+.org-tag {
+  background-color: #eceff1;
+  color: #455a64;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.disclaimer {
+  padding: 10px;
+  background-color: #fafafa;
+  font-size: 0.8rem;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-top: 1px solid #eee;
+}
+
+.disclaimer-icon {
+  background-color: #b0bec5;
+  color: white;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
 }

@@ -9,7 +9,7 @@ const API_URL = "https://capsicum.pythonanywhere.com/scan";
 
 let html5QrCode; // Stores the scanner instance
 
-// --- 1. BARCODE SCANNER LOGIC ---
+// --- 1. BARCODE SCANNER LOGIC (ROBUST MODE) ---
 if (barcodeBtn) {
   barcodeBtn.addEventListener("click", () => {
     // Toggle: If box is open, close it. If closed, open it.
@@ -28,14 +28,10 @@ function startScanner() {
 
   html5QrCode = new Html5Qrcode("reader");
 
-  // Config: Use rear camera, 10fps, native chip support
+  // CONFIG: Reverted to square box, standard speed. More reliable.
   const config = {
     fps: 10,
-    qrbox: { width: 300, height: 150 }, // Wide box for barcodes
-    aspectRatio: 1.0,
-    experimentalFeatures: {
-      useBarCodeDetectorIfSupported: true, // Uses Android Native Chip
-    },
+    qrbox: { width: 250, height: 250 },
   };
 
   html5QrCode
@@ -284,7 +280,12 @@ function checkDevice() {
   const toolsDiv = document.getElementById("mobile-tools");
   const msgDiv = document.getElementById("desktop-msg");
 
-  if (!isMobile) {
+  if (isMobile) {
+    // Show tools, hide warning
+    if (toolsDiv) toolsDiv.style.display = "flex";
+    if (msgDiv) msgDiv.style.display = "none";
+  } else {
+    // Show warning, hide tools (Default CSS might already do this, but this reinforces it)
     if (toolsDiv) toolsDiv.style.display = "none";
     if (msgDiv) msgDiv.style.display = "block";
   }
