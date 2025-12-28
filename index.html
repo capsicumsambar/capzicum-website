@@ -47,33 +47,96 @@
 
       <textarea
         id="ingredients"
-        placeholder="Paste or scan ingredients here..."
+        placeholder="Manually enter ingredients and hit Enter for insights, or use scanners above..."
       ></textarea>
-      <div class="helper-text">Check text accuracy above before scanning.</div>
 
       <div class="scan-row">
-        <input
-          type="text"
-          id="product-name"
-          placeholder="Product Name (Optional)"
-        />
-        <button id="scan-btn">Scan</button>
+        <input type="text" id="product-name" placeholder="Product Name" />
+        <button id="add-list-btn">📝 Add</button>
       </div>
 
       <div id="results"></div>
 
-      <button
-        id="add-list-btn"
-        style="display: none; margin-top: 10px; background-color: #f57c00"
-      >
-        📝 Add to Shopping List
-      </button>
-
       <div class="shopping-list-container">
-        <h3>My Shopping List</h3>
+        <div class="list-header-row">
+          <h3>My Shopping List</h3>
+          <div class="list-actions">
+            <button
+              class="icon-btn"
+              onclick="copyList()"
+              title="Copy to Clipboard"
+            >
+              📋
+            </button>
+            <button
+              class="icon-btn"
+              onclick="downloadList()"
+              title="Download as Text"
+            >
+              ⬇️
+            </button>
+          </div>
+        </div>
+
+        <small class="list-instruction">
+          Enter item to be added to shopping list in Product Name box and hit
+          Enter.
+        </small>
+
         <div id="shopping-list-items"></div>
       </div>
     </main>
+
+    <div id="disclaimer-template" style="display: none">
+      <div class="full-disclaimer" id="fullDisclaimer">
+        <p>
+          Retailer policies change frequently. Results may be incomplete. Always
+          verify with the retailer directly.
+        </p>
+        <p>
+          CSPI is a nonprofit food safety advocacy org.
+          <a
+            href="https://www.cspinet.org/eating-healthy/chemical-cuisine"
+            target="_blank"
+            >Chemical Cuisine guide ↗</a
+          >
+        </p>
+        <div class="policy-title">Retailer avoid lists:</div>
+        <a
+          class="policy-link"
+          href="https://www.wholefoodsmarket.com/quality-standards/food-ingredient-standards"
+          target="_blank"
+        >
+          <span class="num">1</span><span>Whole Foods</span
+          ><span class="external-icon">↗</span>
+        </a>
+        <a
+          class="policy-link"
+          href="https://www.safeway.com/lp/open-nature-natural.html/"
+          target="_blank"
+        >
+          <span class="num">2</span><span>Safeway Open Nature</span
+          ><span class="external-icon">↗</span>
+        </a>
+        <a
+          class="policy-link"
+          href="https://www.kroger.com/b/simple-truth"
+          target="_blank"
+        >
+          <span class="num">3</span><span>Kroger Simple Truth</span
+          ><span class="external-icon">↗</span>
+        </a>
+        <a
+          class="policy-link"
+          href="https://www.heb.com/static-page/select-ingredients"
+          target="_blank"
+        >
+          <span class="num">4</span><span>HEB Select Ingredients</span
+          ><span class="external-icon">↗</span>
+        </a>
+      </div>
+    </div>
+
     <script src="app.js"></script>
   </body>
 </html>

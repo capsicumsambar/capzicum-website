@@ -2,15 +2,32 @@
 const ocrBtn = document.getElementById("ocr-btn");
 const cameraInput = document.getElementById("camera-input");
 const ingredientsBox = document.getElementById("ingredients");
-const nameBox = document.getElementById("product-name"); // New
-const scanBtn = document.getElementById("scan-btn");
+const nameBox = document.getElementById("product-name");
+const addListBtn = document.getElementById("add-list-btn");
 const barcodeBtn = document.getElementById("barcode-btn");
 const readerDiv = document.getElementById("reader");
-const addListBtn = document.getElementById("add-list-btn"); // New
-const listContainer = document.getElementById("shopping-list-items"); // New
+const listContainer = document.getElementById("shopping-list-items");
 const API_URL = "https://capsicum.pythonanywhere.com/scan";
 
 let html5QrCode;
+
+// --- 0. GENERAL UI LOGIC ---
+
+// 1. Ingredients Box: Enter key triggers SCAN
+ingredientsBox.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault(); // Stop new line
+    checkIngredients();
+  }
+});
+
+// 2. Product Name Box: Enter key triggers ADD TO LIST
+nameBox.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    addToList();
+  }
+});
 
 // --- 1. BARCODE SCANNER LOGIC ---
 if (barcodeBtn) {
@@ -29,7 +46,6 @@ function startScanner() {
   ingredientsBox.value = "Point camera at a barcode...";
 
   html5QrCode = new Html5Qrcode("reader");
-
   const config = { fps: 10, qrbox: { width: 250, height: 250 } };
 
   html5QrCode
@@ -61,11 +77,10 @@ async function onScanSuccess(decodedText) {
   const product = await fetchProductDetails(decodedText);
 
   if (product && product.ingredients) {
-    // Fill BOTH Name and Ingredients
     ingredientsBox.value = product.ingredients;
     if (product.name) nameBox.value = product.name;
-
-    scanBtn.click();
+    // Auto-scan
+    checkIngredients();
   } else {
     ingredientsBox.value = "";
     alert("Product not found. Please use 'Scan Text (OCR)'.");
@@ -89,7 +104,7 @@ if (cameraInput) {
     try {
       const file = await resizeImage(originalFile);
 
-      // UPDATED PROMPT: Ask for JSON to separate Name and Ingredients
+      // AI Prompt asking for JSON
       const response = await puter.ai.chat(
         `Look at this food label. Extract: 
          1. The Product Name (brand + type).
@@ -100,20 +115,16 @@ if (cameraInput) {
 
       const content = response.message?.content || response;
 
-      // Parse JSON from AI
       try {
-        // AI sometimes puts markdown ```json ... ``` wrapper, strip it
         const cleanJson = content.replace(/```json|```/g, "").trim();
         const data = JSON.parse(cleanJson);
-
         ingredientsBox.value = data.ingredients || "";
         nameBox.value = data.name || "Unknown Product";
       } catch (jsonErr) {
-        // Fallback if AI didn't give strict JSON
         ingredientsBox.value = content;
       }
 
-      scanBtn.click();
+      checkIngredients();
     } catch (error) {
       console.error("OCR Error:", error);
       ingredientsBox.value = "Error reading text.";
@@ -125,24 +136,59 @@ if (cameraInput) {
   });
 }
 
-// --- 3. SHOPPING LIST LOGIC (NEW) ---
+// --- 3. MAIN SCAN LOGIC (Backend) ---
+async function checkIngredients() {
+  const ingredients = ingredientsBox.value.trim();
+  if (!ingredients) return;
 
-// Load list on startup
+  // Use the results div for loading feedback since scan button is gone
+  const resultsDiv = document.getElementById("results");
+  resultsDiv.innerHTML =
+    '<p style="text-align:center; color:#666;">Checking ingredients...</p>';
+
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ingredients: ingredients }),
+    });
+
+    const data = await response.json();
+    displayResults(data);
+
+    // Show Add Button if product name is present
+    addListBtn.style.display = "flex";
+  } catch (error) {
+    document.getElementById("results").innerHTML =
+      '<p class="error">Error connecting to server</p>';
+  }
+}
+
+// --- 4. SHOPPING LIST LOGIC ---
 document.addEventListener("DOMContentLoaded", renderShoppingList);
 
-// Add Button Logic
-addListBtn.addEventListener("click", () => {
-  const name = nameBox.value.trim() || "Unknown Item";
-  const ingredients = ingredientsBox.value.trim(); // Optional: store this?
+// Logic reused for Button Click AND Enter Key
+function addToList() {
+  const name = nameBox.value.trim();
+  if (!name) return; // Don't add empty items
 
-  // Save to LocalStorage
   const list = JSON.parse(localStorage.getItem("shoppingList") || "[]");
   list.push({ id: Date.now(), name: name });
   localStorage.setItem("shoppingList", JSON.stringify(list));
 
   renderShoppingList();
-  alert(`Added "${name}" to list!`);
-});
+
+  // Visual Feedback
+  const originalText = addListBtn.textContent;
+  addListBtn.textContent = "✅";
+  setTimeout(() => {
+    addListBtn.textContent = originalText;
+    nameBox.value = ""; // Clear input for next item
+  }, 1000);
+}
+
+// Bind button click
+addListBtn.addEventListener("click", addToList);
 
 function renderShoppingList() {
   const list = JSON.parse(localStorage.getItem("shoppingList") || "[]");
@@ -165,7 +211,6 @@ function renderShoppingList() {
   });
 }
 
-// Make delete function global so onclick works
 window.deleteItem = function (id) {
   let list = JSON.parse(localStorage.getItem("shoppingList") || "[]");
   list = list.filter((item) => item.id !== id);
@@ -173,43 +218,34 @@ window.deleteItem = function (id) {
   renderShoppingList();
 };
 
-// --- 4. MAIN SCAN LOGIC ---
-scanBtn.addEventListener("click", checkIngredients);
+window.copyList = function () {
+  const list = JSON.parse(localStorage.getItem("shoppingList") || "[]");
+  if (list.length === 0) return alert("List is empty.");
+  const text = list.map((i) => `- ${i.name}`).join("\n");
+  navigator.clipboard
+    .writeText(text)
+    .then(() => alert("List copied to clipboard!"));
+};
 
-async function checkIngredients() {
-  const ingredients = ingredientsBox.value.trim();
-  if (!ingredients) return;
+window.downloadList = function () {
+  const list = JSON.parse(localStorage.getItem("shoppingList") || "[]");
+  if (list.length === 0) return alert("List is empty.");
+  const text = list.map((i) => `- ${i.name}`).join("\n");
+  const blob = new Blob([text], { type: "text/plain" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "capzicum-list.txt";
+  a.click();
+};
 
-  scanBtn.textContent = "Checking...";
-  scanBtn.disabled = true;
-  document.getElementById("results").innerHTML = "";
-  addListBtn.style.display = "none"; // Hide add button while scanning
-
-  try {
-    const response = await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ingredients: ingredients }),
-    });
-
-    const data = await response.json();
-    displayResults(data);
-
-    // Show "Add to List" button after successful scan
-    addListBtn.style.display = "block";
-  } catch (error) {
-    document.getElementById("results").innerHTML =
-      '<p class="error">Error connecting to server</p>';
-  } finally {
-    scanBtn.textContent = "Scan Ingredients";
-    scanBtn.disabled = false;
-  }
-}
-
+// --- 5. RESULTS DISPLAY & DISCLAIMER TOGGLE ---
 function displayResults(data) {
-  // ... (Your existing displayResults function remains unchanged) ...
-  // Paste the SAME displayResults function from previous version here
   const resultsDiv = document.getElementById("results");
+
+  // Get the Disclaimer HTML from the template
+  const disclaimerHTML = document.getElementById(
+    "disclaimer-template"
+  ).innerHTML;
 
   if (data.banned_count === 0) {
     resultsDiv.innerHTML = `
@@ -228,7 +264,6 @@ function displayResults(data) {
     const tagsHtml = orgs
       .map((org) => `<span class="org-tag">${org}</span>`)
       .join("");
-
     rowsHtml += `
       <div class="results-row">
         <div class="ingredient-info">
@@ -253,21 +288,28 @@ function displayResults(data) {
         <span>Ingredient</span>
         <span>In the avoid list of</span>
       </div>
-      <div class="results-table">
-        ${rowsHtml}
-      </div>
-      <div class="disclaimer">
+      <div class="results-table">${rowsHtml}</div>
+      
+      <div class="disclaimer" onclick="toggleDisclaimer()">
         <span class="disclaimer-icon">ℹ</span>
         <span>For informational purposes only. Tap for more.</span>
       </div>
+      
+      <div id="result-full-disclaimer" style="display:none;">${disclaimerHTML}</div>
     </div>
   `;
 }
 
-// --- 5. HELPERS ---
+window.toggleDisclaimer = function () {
+  const el = document.querySelector("#results .full-disclaimer");
+  if (el) {
+    el.style.display = el.style.display === "block" ? "none" : "block";
+  }
+};
+
+// --- 6. HELPERS ---
 async function fetchProductDetails(barcode) {
   const url = `https://world.openfoodfacts.org/api/v2/product/${barcode}.json?fields=product_name,ingredients_text,ingredients_text_en,image_front_small_url,status`;
-
   try {
     const response = await fetch(url, {
       method: "GET",
@@ -275,10 +317,8 @@ async function fetchProductDetails(barcode) {
         "User-Agent": "Capzicum - Web - Version 1.0 - www.capzicum.com",
       },
     });
-
     if (!response.ok) return null;
     const data = await response.json();
-
     if (data.status === 1 && data.product) {
       return {
         name: data.product.product_name || "Unknown Product",
@@ -338,6 +378,7 @@ function checkDevice() {
     if (toolsDiv) toolsDiv.style.display = "flex";
     if (msgDiv) msgDiv.style.display = "none";
   } else {
+    // Desktop: Hide mobile tools, show warning
     if (toolsDiv) toolsDiv.style.display = "none";
     if (msgDiv) msgDiv.style.display = "block";
   }
