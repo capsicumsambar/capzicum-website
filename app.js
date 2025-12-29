@@ -13,15 +13,15 @@ let html5QrCode;
 
 // --- 0. GENERAL UI LOGIC ---
 
-// 1. Ingredients Box: Enter key triggers SCAN
+// Ingredients Box: Enter triggers SCAN
 ingredientsBox.addEventListener("keypress", (e) => {
   if (e.key === "Enter") {
-    e.preventDefault(); // Stop new line
+    e.preventDefault();
     checkIngredients();
   }
 });
 
-// 2. Product Name Box: Enter key triggers ADD TO LIST
+// Product Name Box: Enter triggers ADD TO LIST
 nameBox.addEventListener("keypress", (e) => {
   if (e.key === "Enter") {
     e.preventDefault();
@@ -29,7 +29,7 @@ nameBox.addEventListener("keypress", (e) => {
   }
 });
 
-// --- 1. BARCODE SCANNER LOGIC ---
+// --- 1. BARCODE SCANNER ---
 if (barcodeBtn) {
   barcodeBtn.addEventListener("click", () => {
     if (readerDiv.style.display === "block") {
@@ -73,13 +73,11 @@ function stopScanner() {
 async function onScanSuccess(decodedText) {
   stopScanner();
   ingredientsBox.value = `Barcode: ${decodedText}. Searching...`;
-
   const product = await fetchProductDetails(decodedText);
 
   if (product && product.ingredients) {
     ingredientsBox.value = product.ingredients;
     if (product.name) nameBox.value = product.name;
-    // Auto-scan
     checkIngredients();
   } else {
     ingredientsBox.value = "";
@@ -87,7 +85,7 @@ async function onScanSuccess(decodedText) {
   }
 }
 
-// --- 2. OCR (AI) SCANNER LOGIC ---
+// --- 2. OCR (AI) ---
 if (ocrBtn) {
   ocrBtn.addEventListener("click", () => cameraInput.click());
 }
@@ -103,8 +101,6 @@ if (cameraInput) {
 
     try {
       const file = await resizeImage(originalFile);
-
-      // AI Prompt asking for JSON
       const response = await puter.ai.chat(
         `Look at this food label. Extract: 
          1. The Product Name (brand + type).
@@ -114,7 +110,6 @@ if (cameraInput) {
       );
 
       const content = response.message?.content || response;
-
       try {
         const cleanJson = content.replace(/```json|```/g, "").trim();
         const data = JSON.parse(cleanJson);
@@ -123,7 +118,6 @@ if (cameraInput) {
       } catch (jsonErr) {
         ingredientsBox.value = content;
       }
-
       checkIngredients();
     } catch (error) {
       console.error("OCR Error:", error);
@@ -136,12 +130,11 @@ if (cameraInput) {
   });
 }
 
-// --- 3. MAIN SCAN LOGIC (Backend) ---
+// --- 3. MAIN SCAN LOGIC ---
 async function checkIngredients() {
   const ingredients = ingredientsBox.value.trim();
   if (!ingredients) return;
 
-  // Use the results div for loading feedback since scan button is gone
   const resultsDiv = document.getElementById("results");
   resultsDiv.innerHTML =
     '<p style="text-align:center; color:#666;">Checking ingredients...</p>';
@@ -156,7 +149,6 @@ async function checkIngredients() {
     const data = await response.json();
     displayResults(data);
 
-    // Show Add Button if product name is present
     addListBtn.style.display = "flex";
   } catch (error) {
     document.getElementById("results").innerHTML =
@@ -164,13 +156,12 @@ async function checkIngredients() {
   }
 }
 
-// --- 4. SHOPPING LIST LOGIC ---
+// --- 4. SHOPPING LIST ---
 document.addEventListener("DOMContentLoaded", renderShoppingList);
 
-// Logic reused for Button Click AND Enter Key
 function addToList() {
   const name = nameBox.value.trim();
-  if (!name) return; // Don't add empty items
+  if (!name) return;
 
   const list = JSON.parse(localStorage.getItem("shoppingList") || "[]");
   list.push({ id: Date.now(), name: name });
@@ -178,16 +169,15 @@ function addToList() {
 
   renderShoppingList();
 
-  // Visual Feedback
+  // Feedback
   const originalText = addListBtn.textContent;
   addListBtn.textContent = "✅";
   setTimeout(() => {
     addListBtn.textContent = originalText;
-    nameBox.value = ""; // Clear input for next item
+    nameBox.value = "";
   }, 1000);
 }
 
-// Bind button click
 addListBtn.addEventListener("click", addToList);
 
 function renderShoppingList() {
@@ -242,10 +232,9 @@ window.downloadList = function () {
 function displayResults(data) {
   const resultsDiv = document.getElementById("results");
 
-  // Get the Disclaimer HTML from the template
-  const disclaimerHTML = document.getElementById(
-    "disclaimer-template"
-  ).innerHTML;
+  // Grab the template content
+  const disclaimerTemplate = document.getElementById("disclaimer-template");
+  const disclaimerHTML = disclaimerTemplate ? disclaimerTemplate.innerHTML : "";
 
   if (data.banned_count === 0) {
     resultsDiv.innerHTML = `
@@ -295,15 +284,21 @@ function displayResults(data) {
         <span>For informational purposes only. Tap for more.</span>
       </div>
       
-      <div id="result-full-disclaimer" style="display:none;">${disclaimerHTML}</div>
+      ${disclaimerHTML}
     </div>
   `;
 }
 
+// Fixed Toggle Function
 window.toggleDisclaimer = function () {
+  // Select the one INSIDE results (to avoid toggling the template itself)
   const el = document.querySelector("#results .full-disclaimer");
   if (el) {
-    el.style.display = el.style.display === "block" ? "none" : "block";
+    if (el.style.display === "block") {
+      el.style.display = "none";
+    } else {
+      el.style.display = "block";
+    }
   }
 };
 
@@ -378,7 +373,6 @@ function checkDevice() {
     if (toolsDiv) toolsDiv.style.display = "flex";
     if (msgDiv) msgDiv.style.display = "none";
   } else {
-    // Desktop: Hide mobile tools, show warning
     if (toolsDiv) toolsDiv.style.display = "none";
     if (msgDiv) msgDiv.style.display = "block";
   }
