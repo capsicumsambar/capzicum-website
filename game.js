@@ -29,7 +29,6 @@ const scoreEl = document.getElementById("score");
 
 // Load a question from API
 async function loadQuestion() {
-  // Reset state
   answered = false;
 
   // Reset UI
@@ -81,8 +80,6 @@ async function loadQuestion() {
     // Show game
     loadingEl.style.display = "none";
     gameContentEl.style.display = "flex";
-    gameContentEl.style.flexDirection = "column";
-    gameContentEl.style.alignItems = "center";
   } catch (error) {
     console.error("Error fetching question:", error);
     loadingEl.textContent = "Error loading question. Please refresh.";
@@ -91,10 +88,7 @@ async function loadQuestion() {
 
 // Handle answer selection
 function selectAnswer(choice) {
-  if (answered) {
-    return; // Already answered
-  }
-
+  if (answered) return;
   answered = true;
 
   const isCorrect = choice === currentQuestion.correct_answer;
@@ -105,34 +99,32 @@ function selectAnswer(choice) {
     scoreEl.textContent = score;
   }
 
-  // Show which was selected and if correct/incorrect
-  if (choice === "a") {
-    containerA.classList.add("selected", isCorrect ? "correct" : "incorrect");
-  } else {
-    containerB.classList.add("selected", isCorrect ? "correct" : "incorrect");
-  }
+  // Mark selected card
+  const selectedContainer = choice === "a" ? containerA : containerB;
+  selectedContainer.classList.add(
+    "selected",
+    isCorrect ? "correct" : "incorrect",
+  );
 
   // Highlight correct answer if wrong
   if (!isCorrect) {
-    if (currentQuestion.correct_answer === "a") {
-      containerA.classList.add("reveal-correct");
-    } else {
-      containerB.classList.add("reveal-correct");
-    }
+    const correctContainer =
+      currentQuestion.correct_answer === "a" ? containerA : containerB;
+    correctContainer.classList.add("reveal-correct");
   }
 
-  // Flip both cards to reveal ingredients
+  // Flip both cards
   cardA.classList.add("flipped");
   cardB.classList.add("flipped");
 
-  // Show result after flip animation
+  // Show result after flip
   setTimeout(() => {
     resultBox.classList.add("visible", isCorrect ? "correct" : "incorrect");
-    resultTitle.textContent = isCorrect ? "✓ Correct!" : "✗ Incorrect";
+    resultTitle.textContent = isCorrect ? "Correct!" : "Incorrect";
     resultExplanation.textContent = currentQuestion.explanation;
     nextBtn.classList.add("visible");
   }, 600);
 }
 
-// Start game on page load
+// Start game
 document.addEventListener("DOMContentLoaded", loadQuestion);
