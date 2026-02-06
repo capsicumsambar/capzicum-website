@@ -1,142 +1,92 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Capzicum</title>
     <link rel="stylesheet" href="styles.css" />
-    <script src="https://js.puter.com/v2/"></script>
-    <script
-      src="https://unpkg.com/html5-qrcode"
-      type="text/javascript"
-    ></script>
+    <style>
+      .landing-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 40px 20px;
+        min-height: 100vh;
+      }
+      .landing-logo {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 16px;
+      }
+      .landing-title {
+        font-size: 2rem;
+        color: var(--primary-color);
+        margin-bottom: 8px;
+      }
+      .landing-tagline {
+        color: var(--secondary-color);
+        margin-bottom: 40px;
+        text-align: center;
+      }
+      .app-card {
+        width: 100%;
+        max-width: 320px;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 20px;
+        text-align: center;
+        text-decoration: none;
+        color: inherit;
+        transition:
+          box-shadow 0.2s,
+          transform 0.2s;
+      }
+      .app-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+      }
+      .app-icon {
+        font-size: 3rem;
+        margin-bottom: 12px;
+      }
+      .app-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--primary-color);
+        margin-bottom: 8px;
+      }
+      .app-desc {
+        font-size: 0.9rem;
+        color: #666;
+      }
+    </style>
   </head>
   <body>
-    <main>
-      <div class="title-row">
-        <img src="icon.png" alt="Capzicum" class="logo" />
-        <h1 style="font-family: Georgia, Garamond, serif; font-style: italic">
-          Capzicum
-        </h1>
-      </div>
-      <p class="tagline">Premium grocery brand quality in your shopping list</p>
+    <div class="landing-container">
+      <img src="icon.png" alt="Capzicum" class="landing-logo" />
+      <h1
+        class="landing-title"
+        style="font-family: Georgia, Garamond, serif; font-style: italic"
+      >
+        Capzicum
+      </h1>
+      <p class="landing-tagline">Tools for mindful grocery shopping</p>
 
-      <div id="desktop-msg" class="desktop-only-msg">
-        📱 Please open on a mobile phone to scan products.
-      </div>
-
-      <div id="mobile-tools" class="action-buttons">
-        <button id="barcode-btn">📶 Scan Barcode (Fast)</button>
-        <small class="hint-text">
-          Focus takes 2-3s. Data from OpenFoodFacts API.
-        </small>
-        <div id="reader"></div>
-
-        <button id="ocr-btn">📸 Scan Text (OCR)</button>
-        <small class="hint-text">
-          Uses AI to read text. Takes ~5-8 seconds.
-        </small>
-        <input
-          type="file"
-          id="camera-input"
-          accept="image/*"
-          capture="environment"
-          style="display: none"
-        />
-      </div>
-
-      <textarea
-        id="ingredients"
-        placeholder="Manually enter ingredients and hit Enter for insights, or use scanners above..."
-      ></textarea>
-
-      <div class="scan-row">
-        <input type="text" id="product-name" placeholder="Product Name" />
-        <button id="add-list-btn">📝 Add</button>
-      </div>
-      <div>
-        <small class="list-instruction">
-          Enter item to be added to shopping list and hit Enter.
-        </small>
-      </div>
-
-      <div id="results"></div>
-
-      <div class="shopping-list-container">
-        <div class="list-header-row">
-          <h3>My Shopping List</h3>
-          <div class="list-actions">
-            <button
-              class="icon-btn"
-              onclick="copyList()"
-              title="Copy to Clipboard"
-            >
-              📋
-            </button>
-            <button
-              class="icon-btn"
-              onclick="downloadList()"
-              title="Download as Text"
-            >
-              ⬇️
-            </button>
-          </div>
+      <a href="scanner.html" class="app-card">
+        <div class="app-icon">🔍</div>
+        <div class="app-title">Ingredient Scanner</div>
+        <div class="app-desc">
+          Scan barcodes or labels to check for flagged ingredients
         </div>
-        <div id="shopping-list-items"></div>
-      </div>
-    </main>
+      </a>
 
-    <div id="disclaimer-template" style="display: none">
-      <div class="full-disclaimer" id="fullDisclaimer">
-        <p>
-          Retailer policies change frequently. Results may be incomplete. Always
-          verify with the retailer directly.
-        </p>
-        <p>
-          CSPI (Center for Science in the Public Interest) is a nonprofit food
-          safety advocacy org.
-          <a
-            href="https://www.cspinet.org/eating-healthy/chemical-cuisine"
-            target="_blank"
-            >Chemical Cuisine guide ↗</a
-          >
-        </p>
-        <div class="policy-title">Retailer avoid lists:</div>
-        <a
-          class="policy-link"
-          href="https://www.wholefoodsmarket.com/quality-standards/food-ingredient-standards"
-          target="_blank"
-        >
-          <span class="num">1</span><span>Whole Foods</span
-          ><span class="external-icon">↗</span>
-        </a>
-        <a
-          class="policy-link"
-          href="https://www.safeway.com/lp/open-nature-natural.html/"
-          target="_blank"
-        >
-          <span class="num">2</span><span>Safeway Open Nature</span
-          ><span class="external-icon">↗</span>
-        </a>
-        <a
-          class="policy-link"
-          href="https://www.kroger.com/b/simple-truth"
-          target="_blank"
-        >
-          <span class="num">3</span><span>Kroger Simple Truth</span
-          ><span class="external-icon">↗</span>
-        </a>
-        <a
-          class="policy-link"
-          href="https://www.heb.com/static-page/select-ingredients"
-          target="_blank"
-        >
-          <span class="num">4</span><span>HEB Select Ingredients</span
-          ><span class="external-icon">↗</span>
-        </a>
-      </div>
+      <a href="game.html" class="app-card">
+        <div class="app-icon">🎮</div>
+        <div class="app-title">UPF Game</div>
+        <div class="app-desc">Test your knowledge of ultra-processed foods</div>
+      </a>
     </div>
-
-    <script src="app.js"></script>
   </body>
 </html>

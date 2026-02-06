@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UPF Game - Capzicum</title>
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .game-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+        max-width: 480px;
+        margin: 0 auto;
+      }
+      .game-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        margin-bottom: 20px;
+      }
+      .back-link {
+        text-decoration: none;
+        color: var(--primary-color);
+        font-size: 0.9rem;
+      }
+      .score-display {
+        background: var(--primary-color);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+      }
+      .question-text {
+        font-size: 1.3rem;
+        text-align: center;
+        color: var(--text-color);
+        margin-bottom: 24px;
+        font-weight: 500;
+      }
+      .products-row {
+        display: flex;
+        gap: 16px;
+        width: 100%;
+        margin-bottom: 20px;
+      }
+      .product-card {
+        flex: 1;
+        background: white;
+        border: 2px solid #ddd;
+        border-radius: 12px;
+        padding: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: center;
+      }
+      .product-card:hover {
+        border-color: var(--primary-color);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      .product-card.selected {
+        border-color: var(--primary-color);
+        border-width: 3px;
+      }
+      .product-card.correct {
+        border-color: #388e3c;
+        background: #e8f5e9;
+      }
+      .product-card.incorrect {
+        border-color: #d32f2f;
+        background: #ffebee;
+      }
+      .product-card.reveal-correct {
+        border-color: #388e3c;
+        border-width: 3px;
+      }
+      .product-image {
+        width: 100%;
+        height: 120px;
+        object-fit: contain;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        background: #f5f5f5;
+      }
+      .product-name {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--text-color);
+        margin-bottom: 8px;
+      }
+      .ingredients-box {
+        display: none;
+        background: #f9f9f9;
+        border-radius: 8px;
+        padding: 10px;
+        font-size: 0.75rem;
+        color: #666;
+        text-align: left;
+        max-height: 100px;
+        overflow-y: auto;
+        margin-top: 8px;
+      }
+      .ingredients-box.visible {
+        display: block;
+      }
+      .flip-hint {
+        font-size: 0.75rem;
+        color: #999;
+        margin-top: 4px;
+      }
+      .result-box {
+        display: none;
+        width: 100%;
+        padding: 16px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+      .result-box.visible {
+        display: block;
+      }
+      .result-box.correct {
+        background: #e8f5e9;
+        border: 1px solid #a5d6a7;
+      }
+      .result-box.incorrect {
+        background: #ffebee;
+        border: 1px solid #ef9a9a;
+      }
+      .result-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+      .result-box.correct .result-title {
+        color: #2e7d32;
+      }
+      .result-box.incorrect .result-title {
+        color: #c62828;
+      }
+      .result-explanation {
+        font-size: 0.9rem;
+        color: #555;
+        line-height: 1.4;
+      }
+      .next-btn {
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 14px 32px;
+        border-radius: 8px;
+        font-size: 1rem;
+        cursor: pointer;
+        display: none;
+      }
+      .next-btn.visible {
+        display: block;
+      }
+      .loading {
+        text-align: center;
+        color: #666;
+        padding: 40px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="game-container">
+      <div class="game-header">
+        <a href="index.html" class="back-link">← Back</a>
+        <div class="score-display">Score: <span id="score">0</span></div>
+      </div>
+
+      <div id="loading" class="loading">Loading question...</div>
+
+      <div id="game-content" style="display: none; width: 100%">
+        <p id="question-text" class="question-text"></p>
+
+        <div class="products-row">
+          <div class="product-card" id="card-a" onclick="selectAnswer('a')">
+            <img id="image-a" class="product-image" src="" alt="Product A" />
+            <div id="name-a" class="product-name"></div>
+            <div class="flip-hint">Tap to select</div>
+            <div id="ingredients-a" class="ingredients-box"></div>
+          </div>
+
+          <div class="product-card" id="card-b" onclick="selectAnswer('b')">
+            <img id="image-b" class="product-image" src="" alt="Product B" />
+            <div id="name-b" class="product-name"></div>
+            <div class="flip-hint">Tap to select</div>
+            <div id="ingredients-b" class="ingredients-box"></div>
+          </div>
+        </div>
+
+        <div id="result-box" class="result-box">
+          <div class="result-title" id="result-title"></div>
+          <div class="result-explanation" id="result-explanation"></div>
+        </div>
+
+        <button id="next-btn" class="next-btn" onclick="loadQuestion()">
+          Next Question →
+        </button>
+      </div>
+    </main>
+
+    <script src="game.js"></script>
+  </body>
+</html>
