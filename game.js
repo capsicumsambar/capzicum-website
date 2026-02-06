@@ -27,6 +27,69 @@ const resultExplanation = document.getElementById("result-explanation");
 const nextBtn = document.getElementById("next-btn");
 const scoreEl = document.getElementById("score");
 
+// Flip card to show ingredients
+function flipCard(choice, event) {
+  event.stopPropagation(); // Prevent triggering selectAnswer
+  const card = choice === "a" ? cardA : cardB;
+  card.classList.add("flipped");
+}
+
+// Close card (flip back)
+function closeCard(choice, event) {
+  event.stopPropagation();
+  const card = choice === "a" ? cardA : cardB;
+  card.classList.remove("flipped");
+}
+
+// Handle answer selection
+function selectAnswer(choice, event) {
+  // Ignore if clicking button
+  if (event.target.classList.contains("check-ingredients-btn")) {
+    return;
+  }
+
+  if (answered) return;
+  answered = true;
+
+  const isCorrect = choice === currentQuestion.correct_answer;
+
+  // Update score
+  if (isCorrect) {
+    score++;
+    scoreEl.textContent = score;
+  }
+
+  // Disable both cards
+  containerA.classList.add("disabled");
+  containerB.classList.add("disabled");
+
+  // Mark selected card
+  const selectedContainer = choice === "a" ? containerA : containerB;
+  selectedContainer.classList.add(
+    "selected",
+    isCorrect ? "correct" : "incorrect",
+  );
+
+  // Highlight correct answer if wrong
+  if (!isCorrect) {
+    const correctContainer =
+      currentQuestion.correct_answer === "a" ? containerA : containerB;
+    correctContainer.classList.add("reveal-correct");
+  }
+
+  // Flip both cards to show ingredients
+  cardA.classList.add("flipped");
+  cardB.classList.add("flipped");
+
+  // Show result
+  setTimeout(() => {
+    resultBox.classList.add("visible", isCorrect ? "correct" : "incorrect");
+    resultTitle.textContent = isCorrect ? "✓ Correct!" : "✗ Incorrect";
+    resultExplanation.textContent = currentQuestion.explanation;
+    nextBtn.classList.add("visible");
+  }, 400);
+}
+
 // Load a question from API
 async function loadQuestion() {
   answered = false;
@@ -43,12 +106,14 @@ async function loadQuestion() {
     "correct",
     "incorrect",
     "reveal-correct",
+    "disabled",
   );
   containerB.classList.remove(
     "selected",
     "correct",
     "incorrect",
     "reveal-correct",
+    "disabled",
   );
   cardA.classList.remove("flipped");
   cardB.classList.remove("flipped");
@@ -84,46 +149,6 @@ async function loadQuestion() {
     console.error("Error fetching question:", error);
     loadingEl.textContent = "Error loading question. Please refresh.";
   }
-}
-
-// Handle answer selection
-function selectAnswer(choice) {
-  if (answered) return;
-  answered = true;
-
-  const isCorrect = choice === currentQuestion.correct_answer;
-
-  // Update score
-  if (isCorrect) {
-    score++;
-    scoreEl.textContent = score;
-  }
-
-  // Mark selected card
-  const selectedContainer = choice === "a" ? containerA : containerB;
-  selectedContainer.classList.add(
-    "selected",
-    isCorrect ? "correct" : "incorrect",
-  );
-
-  // Highlight correct answer if wrong
-  if (!isCorrect) {
-    const correctContainer =
-      currentQuestion.correct_answer === "a" ? containerA : containerB;
-    correctContainer.classList.add("reveal-correct");
-  }
-
-  // Flip both cards
-  cardA.classList.add("flipped");
-  cardB.classList.add("flipped");
-
-  // Show result after flip
-  setTimeout(() => {
-    resultBox.classList.add("visible", isCorrect ? "correct" : "incorrect");
-    resultTitle.textContent = isCorrect ? "Correct!" : "Incorrect";
-    resultExplanation.textContent = currentQuestion.explanation;
-    nextBtn.classList.add("visible");
-  }, 600);
 }
 
 // Start game
