@@ -33,10 +33,23 @@ const resultExplanation = document.getElementById("result-explanation");
 const nextBtn = document.getElementById("next-btn");
 const scoreEl = document.getElementById("score");
 
+// Track flip state separately
+let cardAFlipped = false;
+let cardBFlipped = false;
+
 // Flip card to show ingredients
 function flipCard(choice) {
+  if (answered) return; // Don't allow flip after answered
+
   const card = choice === "a" ? cardA : cardB;
   const wrapper = choice === "a" ? wrapperA : wrapperB;
+
+  if (choice === "a") {
+    cardAFlipped = true;
+  } else {
+    cardBFlipped = true;
+  }
+
   card.classList.add("flipped");
   wrapper.classList.add("is-flipped");
 }
@@ -45,22 +58,28 @@ function flipCard(choice) {
 function closeCard(choice) {
   const card = choice === "a" ? cardA : cardB;
   const wrapper = choice === "a" ? wrapperA : wrapperB;
+
+  if (choice === "a") {
+    cardAFlipped = false;
+  } else {
+    cardBFlipped = false;
+  }
+
   card.classList.remove("flipped");
   wrapper.classList.remove("is-flipped");
 }
 
 // Handle answer selection - only when card is showing front
 function selectAnswer(choice) {
-  const wrapper = choice === "a" ? wrapperA : wrapperB;
-  const card = choice === "a" ? cardA : cardB;
-
   // Don't allow selection if answered or card is flipped
-  if (answered || card.classList.contains("flipped")) {
+  const isFlipped = choice === "a" ? cardAFlipped : cardBFlipped;
+  if (answered || isFlipped) {
     return;
   }
 
   answered = true;
 
+  const wrapper = choice === "a" ? wrapperA : wrapperB;
   const isCorrect = choice === currentQuestion.correct_answer;
 
   // Update score
@@ -84,6 +103,7 @@ function selectAnswer(choice) {
   }
 
   // Show result
+  resultBox.classList.remove("correct", "incorrect");
   resultBox.classList.add("visible", isCorrect ? "correct" : "incorrect");
   resultTitle.textContent = isCorrect ? "✓ Correct!" : "✗ Incorrect";
   resultExplanation.textContent = currentQuestion.explanation;
@@ -93,6 +113,8 @@ function selectAnswer(choice) {
 // Load a question from API
 async function loadQuestion() {
   answered = false;
+  cardAFlipped = false;
+  cardBFlipped = false;
 
   // Reset UI
   loadingEl.style.display = "block";
@@ -121,8 +143,16 @@ async function loadQuestion() {
   cardB.classList.remove("flipped");
 
   try {
+    console.log("Fetching question from:", API_URL);
     const response = await fetch(API_URL);
+    console.log("Response status:", response.status);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
     const data = await response.json();
+    console.log("Data received:", data);
 
     if (!data.success) {
       loadingEl.textContent = "Error loading question. Please refresh.";
@@ -149,17 +179,41 @@ async function loadQuestion() {
     gameContentEl.style.display = "flex";
   } catch (error) {
     console.error("Error fetching question:", error);
-    loadingEl.textContent = "Error loading question. Please refresh.";
+    loadingEl.innerHTML = `Error loading question.<br><br><button onclick="loadQuestion()" style="padding: 10px 20px; cursor: pointer;">Try Again</button>`;
   }
 }
 
 // Event Listeners
-frontA.addEventListener("click", () => selectAnswer("a"));
-frontB.addEventListener("click", () => selectAnswer("b"));
-checkA.addEventListener("click", () => flipCard("a"));
-checkB.addEventListener("click", () => flipCard("b"));
-closeA.addEventListener("click", () => closeCard("a"));
-closeB.addEventListener("click", () => closeCard("b"));
+frontA.addEventListener("click", (e) => {
+  e.stopPropagation();
+  selectAnswer("a");
+});
+
+frontB.addEventListener("click", (e) => {
+  e.stopPropagation();
+  selectAnswer("b");
+});
+
+checkA.addEventListener("click", (e) => {
+  e.stopPropagation();
+  flipCard("a");
+});
+
+checkB.addEventListener("click", (e) => {
+  e.stopPropagation();
+  flipCard("b");
+});
+
+closeA.addEventListener("click", (e) => {
+  e.stopPropagation();
+  closeCard("a");
+});
+
+closeB.addEventListener("click", (e) => {
+  e.stopPropagation();
+  closeCard("b");
+});
+
 nextBtn.addEventListener("click", loadQuestion);
 
 // Start game
