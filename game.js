@@ -2,219 +2,176 @@
 let score = 0;
 let currentQuestion = null;
 let answered = false;
-
-const API_URL = "https://capsicum.pythonanywhere.com/game/question";
-
-// DOM Elements
-const loadingEl = document.getElementById("loading");
-const gameContentEl = document.getElementById("game-content");
-const questionTextEl = document.getElementById("question-text");
-const imageA = document.getElementById("image-a");
-const imageB = document.getElementById("image-b");
-const nameA = document.getElementById("name-a");
-const nameB = document.getElementById("name-b");
-const backNameA = document.getElementById("back-name-a");
-const backNameB = document.getElementById("back-name-b");
-const ingredientsA = document.getElementById("ingredients-a");
-const ingredientsB = document.getElementById("ingredients-b");
-const cardA = document.getElementById("card-a");
-const cardB = document.getElementById("card-b");
-const wrapperA = document.getElementById("wrapper-a");
-const wrapperB = document.getElementById("wrapper-b");
-const frontA = document.getElementById("front-a");
-const frontB = document.getElementById("front-b");
-const checkA = document.getElementById("check-a");
-const checkB = document.getElementById("check-b");
-const closeA = document.getElementById("close-a");
-const closeB = document.getElementById("close-b");
-const resultBox = document.getElementById("result-box");
-const resultTitle = document.getElementById("result-title");
-const resultExplanation = document.getElementById("result-explanation");
-const nextBtn = document.getElementById("next-btn");
-const scoreEl = document.getElementById("score");
-
-// Track flip state separately
 let cardAFlipped = false;
 let cardBFlipped = false;
 
-// Flip card to show ingredients
-function flipCard(choice) {
-  if (answered) return; // Don't allow flip after answered
+const API_URL = "https://capsicum.pythonanywhere.com/game/question";
 
-  const card = choice === "a" ? cardA : cardB;
-  const wrapper = choice === "a" ? wrapperA : wrapperB;
+// Wait for DOM to be ready
+document.addEventListener("DOMContentLoaded", function () {
+  // DOM Elements
+  const loadingEl = document.getElementById("loading");
+  const gameContentEl = document.getElementById("game-content");
+  const questionTextEl = document.getElementById("question-text");
+  const imageA = document.getElementById("image-a");
+  const imageB = document.getElementById("image-b");
+  const nameA = document.getElementById("name-a");
+  const nameB = document.getElementById("name-b");
+  const backNameA = document.getElementById("back-name-a");
+  const backNameB = document.getElementById("back-name-b");
+  const ingredientsA = document.getElementById("ingredients-a");
+  const ingredientsB = document.getElementById("ingredients-b");
+  const cardA = document.getElementById("card-a");
+  const cardB = document.getElementById("card-b");
+  const wrapperA = document.getElementById("wrapper-a");
+  const wrapperB = document.getElementById("wrapper-b");
+  const frontA = document.getElementById("front-a");
+  const frontB = document.getElementById("front-b");
+  const checkA = document.getElementById("check-a");
+  const checkB = document.getElementById("check-b");
+  const closeA = document.getElementById("close-a");
+  const closeB = document.getElementById("close-b");
+  const resultBox = document.getElementById("result-box");
+  const resultTitle = document.getElementById("result-title");
+  const resultExplanation = document.getElementById("result-explanation");
+  const nextBtn = document.getElementById("next-btn");
+  const scoreEl = document.getElementById("score");
 
-  if (choice === "a") {
-    cardAFlipped = true;
-  } else {
-    cardBFlipped = true;
+  // Debug: Check if all elements exist
+  console.log("Elements found:", {
+    loadingEl: !!loadingEl,
+    gameContentEl: !!gameContentEl,
+    cardA: !!cardA,
+    cardB: !!cardB,
+    wrapperA: !!wrapperA,
+    wrapperB: !!wrapperB,
+    frontA: !!frontA,
+    frontB: !!frontB,
+    checkA: !!checkA,
+    checkB: !!checkB,
+    closeA: !!closeA,
+    closeB: !!closeB,
+  });
+
+  function flipCard(choice) {
+    if (answered) return;
+    const card = choice === "a" ? cardA : cardB;
+    const wrapper = choice === "a" ? wrapperA : wrapperB;
+    if (choice === "a") cardAFlipped = true;
+    else cardBFlipped = true;
+    card.classList.add("flipped");
+    wrapper.classList.add("is-flipped");
   }
 
-  card.classList.add("flipped");
-  wrapper.classList.add("is-flipped");
-}
+  function closeCard(choice) {
+    const card = choice === "a" ? cardA : cardB;
+    const wrapper = choice === "a" ? wrapperA : wrapperB;
+    if (choice === "a") cardAFlipped = false;
+    else cardBFlipped = false;
+    card.classList.remove("flipped");
+    wrapper.classList.remove("is-flipped");
+  }
 
-// Close card (flip back)
-function closeCard(choice) {
-  const card = choice === "a" ? cardA : cardB;
-  const wrapper = choice === "a" ? wrapperA : wrapperB;
+  function selectAnswer(choice) {
+    const isFlipped = choice === "a" ? cardAFlipped : cardBFlipped;
+    if (answered || isFlipped) return;
 
-  if (choice === "a") {
+    answered = true;
+    const wrapper = choice === "a" ? wrapperA : wrapperB;
+    const isCorrect = choice === currentQuestion.correct_answer;
+
+    if (isCorrect) {
+      score++;
+      scoreEl.textContent = score;
+    }
+
+    wrapperA.classList.add("disabled");
+    wrapperB.classList.add("disabled");
+    wrapper.classList.add("selected", isCorrect ? "correct" : "incorrect");
+
+    if (!isCorrect) {
+      const correctWrapper =
+        currentQuestion.correct_answer === "a" ? wrapperA : wrapperB;
+      correctWrapper.classList.add("reveal-correct");
+    }
+
+    resultBox.classList.remove("correct", "incorrect");
+    resultBox.classList.add("visible", isCorrect ? "correct" : "incorrect");
+    resultTitle.textContent = isCorrect ? "✓ Correct!" : "✗ Incorrect";
+    resultExplanation.textContent = currentQuestion.explanation;
+    nextBtn.classList.add("visible");
+  }
+
+  async function loadQuestion() {
+    answered = false;
     cardAFlipped = false;
-  } else {
     cardBFlipped = false;
-  }
 
-  card.classList.remove("flipped");
-  wrapper.classList.remove("is-flipped");
-}
+    loadingEl.style.display = "block";
+    gameContentEl.style.display = "none";
+    resultBox.classList.remove("visible", "correct", "incorrect");
+    nextBtn.classList.remove("visible");
 
-// Handle answer selection - only when card is showing front
-function selectAnswer(choice) {
-  // Don't allow selection if answered or card is flipped
-  const isFlipped = choice === "a" ? cardAFlipped : cardBFlipped;
-  if (answered || isFlipped) {
-    return;
-  }
+    wrapperA.classList.remove(
+      "selected",
+      "correct",
+      "incorrect",
+      "reveal-correct",
+      "disabled",
+      "is-flipped",
+    );
+    wrapperB.classList.remove(
+      "selected",
+      "correct",
+      "incorrect",
+      "reveal-correct",
+      "disabled",
+      "is-flipped",
+    );
+    cardA.classList.remove("flipped");
+    cardB.classList.remove("flipped");
 
-  answered = true;
+    try {
+      const response = await fetch(API_URL);
+      const data = await response.json();
 
-  const wrapper = choice === "a" ? wrapperA : wrapperB;
-  const isCorrect = choice === currentQuestion.correct_answer;
+      if (!data.success) {
+        loadingEl.textContent = "Error loading question. Please refresh.";
+        return;
+      }
 
-  // Update score
-  if (isCorrect) {
-    score++;
-    scoreEl.textContent = score;
-  }
+      currentQuestion = data.question;
 
-  // Disable both cards
-  wrapperA.classList.add("disabled");
-  wrapperB.classList.add("disabled");
+      questionTextEl.textContent = currentQuestion.text;
+      imageA.src =
+        "https://capsicum.pythonanywhere.com" + currentQuestion.product_a.image;
+      imageB.src =
+        "https://capsicum.pythonanywhere.com" + currentQuestion.product_b.image;
+      nameA.textContent = currentQuestion.product_a.name;
+      nameB.textContent = currentQuestion.product_b.name;
+      backNameA.textContent = currentQuestion.product_a.name;
+      backNameB.textContent = currentQuestion.product_b.name;
+      ingredientsA.textContent = currentQuestion.product_a.ingredients;
+      ingredientsB.textContent = currentQuestion.product_b.ingredients;
 
-  // Mark selected card
-  wrapper.classList.add("selected", isCorrect ? "correct" : "incorrect");
-
-  // Highlight correct answer if wrong
-  if (!isCorrect) {
-    const correctWrapper =
-      currentQuestion.correct_answer === "a" ? wrapperA : wrapperB;
-    correctWrapper.classList.add("reveal-correct");
-  }
-
-  // Show result
-  resultBox.classList.remove("correct", "incorrect");
-  resultBox.classList.add("visible", isCorrect ? "correct" : "incorrect");
-  resultTitle.textContent = isCorrect ? "✓ Correct!" : "✗ Incorrect";
-  resultExplanation.textContent = currentQuestion.explanation;
-  nextBtn.classList.add("visible");
-}
-
-// Load a question from API
-async function loadQuestion() {
-  answered = false;
-  cardAFlipped = false;
-  cardBFlipped = false;
-
-  // Reset UI
-  loadingEl.style.display = "block";
-  gameContentEl.style.display = "none";
-  resultBox.classList.remove("visible", "correct", "incorrect");
-  nextBtn.classList.remove("visible");
-
-  // Reset cards
-  wrapperA.classList.remove(
-    "selected",
-    "correct",
-    "incorrect",
-    "reveal-correct",
-    "disabled",
-    "is-flipped",
-  );
-  wrapperB.classList.remove(
-    "selected",
-    "correct",
-    "incorrect",
-    "reveal-correct",
-    "disabled",
-    "is-flipped",
-  );
-  cardA.classList.remove("flipped");
-  cardB.classList.remove("flipped");
-
-  try {
-    console.log("Fetching question from:", API_URL);
-    const response = await fetch(API_URL);
-    console.log("Response status:", response.status);
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      loadingEl.style.display = "none";
+      gameContentEl.style.display = "flex";
+    } catch (error) {
+      console.error("Error:", error);
+      loadingEl.innerHTML =
+        'Error loading. <button onclick="location.reload()">Retry</button>';
     }
-
-    const data = await response.json();
-    console.log("Data received:", data);
-
-    if (!data.success) {
-      loadingEl.textContent = "Error loading question. Please refresh.";
-      return;
-    }
-
-    currentQuestion = data.question;
-
-    // Populate UI
-    questionTextEl.textContent = currentQuestion.text;
-    imageA.src =
-      "https://capsicum.pythonanywhere.com" + currentQuestion.product_a.image;
-    imageB.src =
-      "https://capsicum.pythonanywhere.com" + currentQuestion.product_b.image;
-    nameA.textContent = currentQuestion.product_a.name;
-    nameB.textContent = currentQuestion.product_b.name;
-    backNameA.textContent = currentQuestion.product_a.name;
-    backNameB.textContent = currentQuestion.product_b.name;
-    ingredientsA.textContent = currentQuestion.product_a.ingredients;
-    ingredientsB.textContent = currentQuestion.product_b.ingredients;
-
-    // Show game
-    loadingEl.style.display = "none";
-    gameContentEl.style.display = "flex";
-  } catch (error) {
-    console.error("Error fetching question:", error);
-    loadingEl.innerHTML = `Error loading question.<br><br><button onclick="loadQuestion()" style="padding: 10px 20px; cursor: pointer;">Try Again</button>`;
   }
-}
 
-// Event Listeners
-frontA.addEventListener("click", (e) => {
-  e.stopPropagation();
-  selectAnswer("a");
+  // Event Listeners
+  frontA.addEventListener("click", () => selectAnswer("a"));
+  frontB.addEventListener("click", () => selectAnswer("b"));
+  checkA.addEventListener("click", () => flipCard("a"));
+  checkB.addEventListener("click", () => flipCard("b"));
+  closeA.addEventListener("click", () => closeCard("a"));
+  closeB.addEventListener("click", () => closeCard("b"));
+  nextBtn.addEventListener("click", loadQuestion);
+
+  // Start
+  loadQuestion();
 });
-
-frontB.addEventListener("click", (e) => {
-  e.stopPropagation();
-  selectAnswer("b");
-});
-
-checkA.addEventListener("click", (e) => {
-  e.stopPropagation();
-  flipCard("a");
-});
-
-checkB.addEventListener("click", (e) => {
-  e.stopPropagation();
-  flipCard("b");
-});
-
-closeA.addEventListener("click", (e) => {
-  e.stopPropagation();
-  closeCard("a");
-});
-
-closeB.addEventListener("click", (e) => {
-  e.stopPropagation();
-  closeCard("b");
-});
-
-nextBtn.addEventListener("click", loadQuestion);
-
-// Start game
-document.addEventListener("DOMContentLoaded", loadQuestion);
