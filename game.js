@@ -19,8 +19,14 @@ const ingredientsA = document.getElementById("ingredients-a");
 const ingredientsB = document.getElementById("ingredients-b");
 const cardA = document.getElementById("card-a");
 const cardB = document.getElementById("card-b");
-const containerA = document.getElementById("container-a");
-const containerB = document.getElementById("container-b");
+const wrapperA = document.getElementById("wrapper-a");
+const wrapperB = document.getElementById("wrapper-b");
+const frontA = document.getElementById("front-a");
+const frontB = document.getElementById("front-b");
+const checkA = document.getElementById("check-a");
+const checkB = document.getElementById("check-b");
+const closeA = document.getElementById("close-a");
+const closeB = document.getElementById("close-b");
 const resultBox = document.getElementById("result-box");
 const resultTitle = document.getElementById("result-title");
 const resultExplanation = document.getElementById("result-explanation");
@@ -28,27 +34,31 @@ const nextBtn = document.getElementById("next-btn");
 const scoreEl = document.getElementById("score");
 
 // Flip card to show ingredients
-function flipCard(choice, event) {
-  event.stopPropagation(); // Prevent triggering selectAnswer
+function flipCard(choice) {
   const card = choice === "a" ? cardA : cardB;
+  const wrapper = choice === "a" ? wrapperA : wrapperB;
   card.classList.add("flipped");
+  wrapper.classList.add("is-flipped");
 }
 
 // Close card (flip back)
-function closeCard(choice, event) {
-  event.stopPropagation();
+function closeCard(choice) {
   const card = choice === "a" ? cardA : cardB;
+  const wrapper = choice === "a" ? wrapperA : wrapperB;
   card.classList.remove("flipped");
+  wrapper.classList.remove("is-flipped");
 }
 
-// Handle answer selection
-function selectAnswer(choice, event) {
-  // Ignore if clicking button
-  if (event.target.classList.contains("check-ingredients-btn")) {
+// Handle answer selection - only when card is showing front
+function selectAnswer(choice) {
+  const wrapper = choice === "a" ? wrapperA : wrapperB;
+  const card = choice === "a" ? cardA : cardB;
+
+  // Don't allow selection if answered or card is flipped
+  if (answered || card.classList.contains("flipped")) {
     return;
   }
 
-  if (answered) return;
   answered = true;
 
   const isCorrect = choice === currentQuestion.correct_answer;
@@ -60,34 +70,24 @@ function selectAnswer(choice, event) {
   }
 
   // Disable both cards
-  containerA.classList.add("disabled");
-  containerB.classList.add("disabled");
+  wrapperA.classList.add("disabled");
+  wrapperB.classList.add("disabled");
 
   // Mark selected card
-  const selectedContainer = choice === "a" ? containerA : containerB;
-  selectedContainer.classList.add(
-    "selected",
-    isCorrect ? "correct" : "incorrect",
-  );
+  wrapper.classList.add("selected", isCorrect ? "correct" : "incorrect");
 
   // Highlight correct answer if wrong
   if (!isCorrect) {
-    const correctContainer =
-      currentQuestion.correct_answer === "a" ? containerA : containerB;
-    correctContainer.classList.add("reveal-correct");
+    const correctWrapper =
+      currentQuestion.correct_answer === "a" ? wrapperA : wrapperB;
+    correctWrapper.classList.add("reveal-correct");
   }
 
-  // Flip both cards to show ingredients
-  cardA.classList.add("flipped");
-  cardB.classList.add("flipped");
-
   // Show result
-  setTimeout(() => {
-    resultBox.classList.add("visible", isCorrect ? "correct" : "incorrect");
-    resultTitle.textContent = isCorrect ? "✓ Correct!" : "✗ Incorrect";
-    resultExplanation.textContent = currentQuestion.explanation;
-    nextBtn.classList.add("visible");
-  }, 400);
+  resultBox.classList.add("visible", isCorrect ? "correct" : "incorrect");
+  resultTitle.textContent = isCorrect ? "✓ Correct!" : "✗ Incorrect";
+  resultExplanation.textContent = currentQuestion.explanation;
+  nextBtn.classList.add("visible");
 }
 
 // Load a question from API
@@ -101,19 +101,21 @@ async function loadQuestion() {
   nextBtn.classList.remove("visible");
 
   // Reset cards
-  containerA.classList.remove(
+  wrapperA.classList.remove(
     "selected",
     "correct",
     "incorrect",
     "reveal-correct",
     "disabled",
+    "is-flipped",
   );
-  containerB.classList.remove(
+  wrapperB.classList.remove(
     "selected",
     "correct",
     "incorrect",
     "reveal-correct",
     "disabled",
+    "is-flipped",
   );
   cardA.classList.remove("flipped");
   cardB.classList.remove("flipped");
@@ -150,6 +152,15 @@ async function loadQuestion() {
     loadingEl.textContent = "Error loading question. Please refresh.";
   }
 }
+
+// Event Listeners
+frontA.addEventListener("click", () => selectAnswer("a"));
+frontB.addEventListener("click", () => selectAnswer("b"));
+checkA.addEventListener("click", () => flipCard("a"));
+checkB.addEventListener("click", () => flipCard("b"));
+closeA.addEventListener("click", () => closeCard("a"));
+closeB.addEventListener("click", () => closeCard("b"));
+nextBtn.addEventListener("click", loadQuestion);
 
 // Start game
 document.addEventListener("DOMContentLoaded", loadQuestion);

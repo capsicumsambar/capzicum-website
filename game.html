@@ -63,15 +63,24 @@
         margin-bottom: 24px;
       }
 
+      /* Card Wrapper - contains card + button */
+      .card-wrapper {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
       /* Flip Card Styles */
       .card-container {
-        flex: 1;
+        width: 100%;
         perspective: 1000px;
+        margin-bottom: 8px;
       }
       .product-card {
         position: relative;
         width: 100%;
-        height: 340px;
+        height: 300px;
         transform-style: preserve-3d;
         transition: transform 0.6s ease;
       }
@@ -93,42 +102,45 @@
         padding: 16px;
         transition:
           border-color 0.3s,
-          background-color 0.3s;
+          background-color 0.3s,
+          box-shadow 0.2s;
       }
       .card-front {
         z-index: 2;
         cursor: pointer;
+        justify-content: center;
       }
       .card-back {
         transform: rotateY(180deg);
         justify-content: flex-start;
       }
 
-      /* Hover state for front only when not answered */
-      .card-container:not(.disabled) .card-front:hover {
+      /* Hover state for front only when not answered and not flipped */
+      .card-wrapper:not(.disabled):not(.is-flipped) .card-front:hover {
         border-color: #2e7d6f;
+        box-shadow: 0 4px 12px rgba(46, 125, 111, 0.15);
       }
 
       /* Selection states */
-      .card-container.selected.correct .card-front,
-      .card-container.selected.correct .card-back {
+      .card-wrapper.selected.correct .card-front,
+      .card-wrapper.selected.correct .card-back {
         border-color: #4caf50;
         background: #e8f5e9;
       }
-      .card-container.selected.incorrect .card-front,
-      .card-container.selected.incorrect .card-back {
+      .card-wrapper.selected.incorrect .card-front,
+      .card-wrapper.selected.incorrect .card-back {
         border-color: #f44336;
         background: #ffebee;
       }
-      .card-container.reveal-correct .card-front,
-      .card-container.reveal-correct .card-back {
+      .card-wrapper.reveal-correct .card-front,
+      .card-wrapper.reveal-correct .card-back {
         border-color: #4caf50;
         background: #e8f5e9;
       }
 
       .product-image {
         width: 100%;
-        height: 130px;
+        height: 140px;
         object-fit: contain;
         border-radius: 8px;
         margin-bottom: 12px;
@@ -145,25 +157,25 @@
       .tap-hint {
         font-size: 0.8rem;
         color: #999;
-        margin-bottom: 12px;
       }
-      .check-ingredients-btn {
-        background: transparent;
-        border: 2px solid #2e7d6f;
-        color: #2e7d6f;
-        padding: 8px 16px;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 600;
+
+      /* Check Ingredients Link - Outside Card */
+      .check-ingredients-link {
+        background: none;
+        border: none;
+        color: #888;
+        font-size: 0.75rem;
         cursor: pointer;
-        margin-top: auto;
-        transition:
-          background 0.2s,
-          color 0.2s;
+        text-decoration: underline;
+        padding: 4px 0;
+        transition: color 0.2s;
       }
-      .check-ingredients-btn:hover {
-        background: #2e7d6f;
-        color: white;
+      .check-ingredients-link:hover {
+        color: #2e7d6f;
+      }
+      .card-wrapper.disabled .check-ingredients-link,
+      .card-wrapper.is-flipped .check-ingredients-link {
+        display: none;
       }
 
       /* Card Back */
@@ -175,7 +187,7 @@
         width: 100%;
       }
       .ingredients-text {
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         color: #555;
         line-height: 1.6;
         overflow-y: auto;
@@ -293,11 +305,8 @@
       }
 
       /* Disabled state */
-      .card-container.disabled .card-front {
+      .card-wrapper.disabled .card-front {
         cursor: default;
-      }
-      .card-container.disabled .check-ingredients-btn {
-        display: none;
       }
     </style>
   </head>
@@ -314,62 +323,58 @@
         <p id="question-text" class="question-text"></p>
 
         <div class="products-row">
-          <div class="card-container" id="container-a">
-            <div class="product-card" id="card-a">
-              <div class="card-front" onclick="selectAnswer('a', event)">
-                <img
-                  id="image-a"
-                  class="product-image"
-                  src=""
-                  alt="Product A"
-                />
-                <div id="name-a" class="product-name"></div>
-                <div class="tap-hint">Tap to select</div>
-                <button
-                  class="check-ingredients-btn"
-                  onclick="flipCard('a', event)"
-                >
-                  Check Ingredients
-                </button>
-              </div>
-              <div class="card-back">
-                <div class="back-label">Ingredients:</div>
-                <div id="ingredients-a" class="ingredients-text"></div>
-                <div id="back-name-a" class="back-product-name"></div>
-                <button class="close-btn" onclick="closeCard('a', event)">
-                  Close
-                </button>
+          <!-- Card A -->
+          <div class="card-wrapper" id="wrapper-a">
+            <div class="card-container">
+              <div class="product-card" id="card-a">
+                <div class="card-front" id="front-a">
+                  <img
+                    id="image-a"
+                    class="product-image"
+                    src=""
+                    alt="Product A"
+                  />
+                  <div id="name-a" class="product-name"></div>
+                  <div class="tap-hint">Tap to select</div>
+                </div>
+                <div class="card-back">
+                  <div class="back-label">Ingredients:</div>
+                  <div id="ingredients-a" class="ingredients-text"></div>
+                  <div id="back-name-a" class="back-product-name"></div>
+                  <button class="close-btn" id="close-a">Close</button>
+                </div>
               </div>
             </div>
+            <button class="check-ingredients-link" id="check-a">
+              Check ingredients
+            </button>
           </div>
 
-          <div class="card-container" id="container-b">
-            <div class="product-card" id="card-b">
-              <div class="card-front" onclick="selectAnswer('b', event)">
-                <img
-                  id="image-b"
-                  class="product-image"
-                  src=""
-                  alt="Product B"
-                />
-                <div id="name-b" class="product-name"></div>
-                <div class="tap-hint">Tap to select</div>
-                <button
-                  class="check-ingredients-btn"
-                  onclick="flipCard('b', event)"
-                >
-                  Check Ingredients
-                </button>
-              </div>
-              <div class="card-back">
-                <div class="back-label">Ingredients:</div>
-                <div id="ingredients-b" class="ingredients-text"></div>
-                <div id="back-name-b" class="back-product-name"></div>
-                <button class="close-btn" onclick="closeCard('b', event)">
-                  Close
-                </button>
+          <!-- Card B -->
+          <div class="card-wrapper" id="wrapper-b">
+            <div class="card-container">
+              <div class="product-card" id="card-b">
+                <div class="card-front" id="front-b">
+                  <img
+                    id="image-b"
+                    class="product-image"
+                    src=""
+                    alt="Product B"
+                  />
+                  <div id="name-b" class="product-name"></div>
+                  <div class="tap-hint">Tap to select</div>
+                </div>
+                <div class="card-back">
+                  <div class="back-label">Ingredients:</div>
+                  <div id="ingredients-b" class="ingredients-text"></div>
+                  <div id="back-name-b" class="back-product-name"></div>
+                  <button class="close-btn" id="close-b">Close</button>
+                </div>
               </div>
             </div>
+            <button class="check-ingredients-link" id="check-b">
+              Check ingredients
+            </button>
           </div>
         </div>
 
@@ -378,9 +383,7 @@
           <div class="result-explanation" id="result-explanation"></div>
         </div>
 
-        <button id="next-btn" class="next-btn" onclick="loadQuestion()">
-          Next Question →
-        </button>
+        <button id="next-btn" class="next-btn">Next Question →</button>
       </div>
     </main>
 
