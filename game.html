@@ -46,33 +46,67 @@
         width: 100%;
         margin-bottom: 20px;
       }
-      .product-card {
+
+      /* Flip Card Styles */
+      .card-container {
         flex: 1;
-        background: white;
+        perspective: 1000px;
+      }
+      .product-card {
+        position: relative;
+        width: 100%;
+        height: 280px;
+        cursor: pointer;
+        transform-style: preserve-3d;
+        transition: transform 0.6s;
+      }
+      .product-card.flipped {
+        transform: rotateY(180deg);
+      }
+      .card-front,
+      .card-back {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
         border: 2px solid #ddd;
         border-radius: 12px;
+        background: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
         padding: 12px;
-        cursor: pointer;
-        transition: all 0.2s;
-        text-align: center;
+        box-sizing: border-box;
       }
-      .product-card:hover {
+      .card-front {
+        z-index: 2;
+      }
+      .card-back {
+        transform: rotateY(180deg);
+        justify-content: flex-start;
+        padding: 16px;
+      }
+      .card-container:hover .card-front,
+      .card-container:hover .card-back {
         border-color: var(--primary-color);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       }
-      .product-card.selected {
+      .card-container.selected .card-front,
+      .card-container.selected .card-back {
         border-color: var(--primary-color);
         border-width: 3px;
       }
-      .product-card.correct {
+      .card-container.correct .card-front,
+      .card-container.correct .card-back {
         border-color: #388e3c;
         background: #e8f5e9;
       }
-      .product-card.incorrect {
+      .card-container.incorrect .card-front,
+      .card-container.incorrect .card-back {
         border-color: #d32f2f;
         background: #ffebee;
       }
-      .product-card.reveal-correct {
+      .card-container.reveal-correct .card-front,
+      .card-container.reveal-correct .card-back {
         border-color: #388e3c;
         border-width: 3px;
       }
@@ -89,27 +123,36 @@
         font-size: 0.9rem;
         color: var(--text-color);
         margin-bottom: 8px;
-      }
-      .ingredients-box {
-        display: none;
-        background: #f9f9f9;
-        border-radius: 8px;
-        padding: 10px;
-        font-size: 0.75rem;
-        color: #666;
-        text-align: left;
-        max-height: 100px;
-        overflow-y: auto;
-        margin-top: 8px;
-      }
-      .ingredients-box.visible {
-        display: block;
+        text-align: center;
       }
       .flip-hint {
         font-size: 0.75rem;
         color: #999;
-        margin-top: 4px;
+        margin-top: auto;
       }
+      .back-label {
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: var(--primary-color);
+        margin-bottom: 8px;
+        width: 100%;
+      }
+      .ingredients-text {
+        font-size: 0.8rem;
+        color: #555;
+        line-height: 1.4;
+        overflow-y: auto;
+        flex: 1;
+        width: 100%;
+      }
+      .back-product-name {
+        font-size: 0.75rem;
+        color: #999;
+        margin-top: auto;
+        text-align: center;
+      }
+
+      /* Result Box */
       .result-box {
         display: none;
         width: 100%;
@@ -178,18 +221,52 @@
         <p id="question-text" class="question-text"></p>
 
         <div class="products-row">
-          <div class="product-card" id="card-a" onclick="selectAnswer('a')">
-            <img id="image-a" class="product-image" src="" alt="Product A" />
-            <div id="name-a" class="product-name"></div>
-            <div class="flip-hint">Tap to select</div>
-            <div id="ingredients-a" class="ingredients-box"></div>
+          <div
+            class="card-container"
+            id="container-a"
+            onclick="selectAnswer('a')"
+          >
+            <div class="product-card" id="card-a">
+              <div class="card-front">
+                <img
+                  id="image-a"
+                  class="product-image"
+                  src=""
+                  alt="Product A"
+                />
+                <div id="name-a" class="product-name"></div>
+                <div class="flip-hint">👆 Tap to select</div>
+              </div>
+              <div class="card-back">
+                <div class="back-label">📋 Ingredients:</div>
+                <div id="ingredients-a" class="ingredients-text"></div>
+                <div id="back-name-a" class="back-product-name"></div>
+              </div>
+            </div>
           </div>
 
-          <div class="product-card" id="card-b" onclick="selectAnswer('b')">
-            <img id="image-b" class="product-image" src="" alt="Product B" />
-            <div id="name-b" class="product-name"></div>
-            <div class="flip-hint">Tap to select</div>
-            <div id="ingredients-b" class="ingredients-box"></div>
+          <div
+            class="card-container"
+            id="container-b"
+            onclick="selectAnswer('b')"
+          >
+            <div class="product-card" id="card-b">
+              <div class="card-front">
+                <img
+                  id="image-b"
+                  class="product-image"
+                  src=""
+                  alt="Product B"
+                />
+                <div id="name-b" class="product-name"></div>
+                <div class="flip-hint">👆 Tap to select</div>
+              </div>
+              <div class="card-back">
+                <div class="back-label">📋 Ingredients:</div>
+                <div id="ingredients-b" class="ingredients-text"></div>
+                <div id="back-name-b" class="back-product-name"></div>
+              </div>
+            </div>
           </div>
         </div>
 

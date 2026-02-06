@@ -1,6 +1,7 @@
 // Game State
 let score = 0;
 let currentQuestion = null;
+let answered = false;
 
 const API_URL = "https://capsicum.pythonanywhere.com/game/question";
 
@@ -12,10 +13,14 @@ const imageA = document.getElementById("image-a");
 const imageB = document.getElementById("image-b");
 const nameA = document.getElementById("name-a");
 const nameB = document.getElementById("name-b");
+const backNameA = document.getElementById("back-name-a");
+const backNameB = document.getElementById("back-name-b");
 const ingredientsA = document.getElementById("ingredients-a");
 const ingredientsB = document.getElementById("ingredients-b");
 const cardA = document.getElementById("card-a");
 const cardB = document.getElementById("card-b");
+const containerA = document.getElementById("container-a");
+const containerB = document.getElementById("container-b");
 const resultBox = document.getElementById("result-box");
 const resultTitle = document.getElementById("result-title");
 const resultExplanation = document.getElementById("result-explanation");
@@ -24,15 +29,30 @@ const scoreEl = document.getElementById("score");
 
 // Load a question from API
 async function loadQuestion() {
+  // Reset state
+  answered = false;
+
   // Reset UI
   loadingEl.style.display = "block";
   gameContentEl.style.display = "none";
   resultBox.classList.remove("visible", "correct", "incorrect");
   nextBtn.classList.remove("visible");
-  cardA.classList.remove("selected", "correct", "incorrect", "reveal-correct");
-  cardB.classList.remove("selected", "correct", "incorrect", "reveal-correct");
-  ingredientsA.classList.remove("visible");
-  ingredientsB.classList.remove("visible");
+
+  // Reset cards
+  containerA.classList.remove(
+    "selected",
+    "correct",
+    "incorrect",
+    "reveal-correct",
+  );
+  containerB.classList.remove(
+    "selected",
+    "correct",
+    "incorrect",
+    "reveal-correct",
+  );
+  cardA.classList.remove("flipped");
+  cardB.classList.remove("flipped");
 
   try {
     const response = await fetch(API_URL);
@@ -53,6 +73,8 @@ async function loadQuestion() {
       "https://capsicum.pythonanywhere.com" + currentQuestion.product_b.image;
     nameA.textContent = currentQuestion.product_a.name;
     nameB.textContent = currentQuestion.product_b.name;
+    backNameA.textContent = currentQuestion.product_a.name;
+    backNameB.textContent = currentQuestion.product_b.name;
     ingredientsA.textContent = currentQuestion.product_a.ingredients;
     ingredientsB.textContent = currentQuestion.product_b.ingredients;
 
@@ -69,9 +91,11 @@ async function loadQuestion() {
 
 // Handle answer selection
 function selectAnswer(choice) {
-  if (resultBox.classList.contains("visible")) {
+  if (answered) {
     return; // Already answered
   }
+
+  answered = true;
 
   const isCorrect = choice === currentQuestion.correct_answer;
 
@@ -81,33 +105,33 @@ function selectAnswer(choice) {
     scoreEl.textContent = score;
   }
 
-  // Show which was selected
+  // Show which was selected and if correct/incorrect
   if (choice === "a") {
-    cardA.classList.add("selected", isCorrect ? "correct" : "incorrect");
+    containerA.classList.add("selected", isCorrect ? "correct" : "incorrect");
   } else {
-    cardB.classList.add("selected", isCorrect ? "correct" : "incorrect");
+    containerB.classList.add("selected", isCorrect ? "correct" : "incorrect");
   }
 
   // Highlight correct answer if wrong
   if (!isCorrect) {
     if (currentQuestion.correct_answer === "a") {
-      cardA.classList.add("reveal-correct");
+      containerA.classList.add("reveal-correct");
     } else {
-      cardB.classList.add("reveal-correct");
+      containerB.classList.add("reveal-correct");
     }
   }
 
-  // Reveal ingredients
-  ingredientsA.classList.add("visible");
-  ingredientsB.classList.add("visible");
+  // Flip both cards to reveal ingredients
+  cardA.classList.add("flipped");
+  cardB.classList.add("flipped");
 
-  // Show result
-  resultBox.classList.add("visible", isCorrect ? "correct" : "incorrect");
-  resultTitle.textContent = isCorrect ? "✓ Correct!" : "✗ Incorrect";
-  resultExplanation.textContent = currentQuestion.explanation;
-
-  // Show next button
-  nextBtn.classList.add("visible");
+  // Show result after flip animation
+  setTimeout(() => {
+    resultBox.classList.add("visible", isCorrect ? "correct" : "incorrect");
+    resultTitle.textContent = isCorrect ? "✓ Correct!" : "✗ Incorrect";
+    resultExplanation.textContent = currentQuestion.explanation;
+    nextBtn.classList.add("visible");
+  }, 600);
 }
 
 // Start game on page load
