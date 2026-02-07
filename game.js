@@ -1,13 +1,13 @@
 // Game State
-let score = 0;
 let currentQuestion = null;
 let answered = false;
 let cardAFlipped = false;
 let cardBFlipped = false;
+let recentQuestions = []; // Track recent to avoid repeats
+const RECENT_LIMIT = 5; // Don't repeat within last 5 questions
 
-const API_URL = "https://capsicum.pythonanywhere.com/game/question";
+const API_BASE = "https://capsicum.pythonanywhere.com";
 
-// Wait for DOM to be ready
 document.addEventListener("DOMContentLoaded", function () {
   // DOM Elements
   const loadingEl = document.getElementById("loading");
@@ -35,23 +35,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const resultTitle = document.getElementById("result-title");
   const resultExplanation = document.getElementById("result-explanation");
   const nextBtn = document.getElementById("next-btn");
-  const scoreEl = document.getElementById("score");
-
-  // Debug: Check if all elements exist
-  console.log("Elements found:", {
-    loadingEl: !!loadingEl,
-    gameContentEl: !!gameContentEl,
-    cardA: !!cardA,
-    cardB: !!cardB,
-    wrapperA: !!wrapperA,
-    wrapperB: !!wrapperB,
-    frontA: !!frontA,
-    frontB: !!frontB,
-    checkA: !!checkA,
-    checkB: !!checkB,
-    closeA: !!closeA,
-    closeB: !!closeB,
-  });
 
   function flipCard(choice) {
     if (answered) return;
@@ -77,13 +60,9 @@ document.addEventListener("DOMContentLoaded", function () {
     if (answered || isFlipped) return;
 
     answered = true;
+
     const wrapper = choice === "a" ? wrapperA : wrapperB;
     const isCorrect = choice === currentQuestion.correct_answer;
-
-    if (isCorrect) {
-      score++;
-      scoreEl.textContent = score;
-    }
 
     wrapperA.classList.add("disabled");
     wrapperB.classList.add("disabled");
@@ -132,8 +111,19 @@ document.addEventListener("DOMContentLoaded", function () {
     cardB.classList.remove("flipped");
 
     try {
-      const response = await fetch(API_URL);
-      const data = await response.json();
+      // Keep fetching until we get a non-recent question (max 10 tries)
+      let attempts = 0;
+      let data;
+
+      do {
+        const response = await fetch(API_BASE + "/game/question");
+        data = await response.json();
+        attempts++;
+      } while (
+        data.success &&
+        recentQuestions.includes(data.question.id) &&
+        attempts < 10
+      );
 
       if (!data.success) {
         loadingEl.textContent = "Error loading question. Please refresh.";
@@ -142,11 +132,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
       currentQuestion = data.question;
 
+      // Track recent questions
+      recentQuestions.push(currentQuestion.id);
+      if (recentQuestions.length > RECENT_LIMIT) {
+        recentQuestions.shift();
+      }
+
       questionTextEl.textContent = currentQuestion.text;
-      imageA.src =
-        "https://capsicum.pythonanywhere.com" + currentQuestion.product_a.image;
-      imageB.src =
-        "https://capsicum.pythonanywhere.com" + currentQuestion.product_b.image;
+      imageA.src = API_BASE + currentQuestion.product_a.image;
+      imageB.src = API_BASE + currentQuestion.product_b.image;
       nameA.textContent = currentQuestion.product_a.name;
       nameB.textContent = currentQuestion.product_b.name;
       backNameA.textContent = currentQuestion.product_a.name;
@@ -164,12 +158,30 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // Event Listeners
-  frontA.addEventListener("click", () => selectAnswer("a"));
-  frontB.addEventListener("click", () => selectAnswer("b"));
-  checkA.addEventListener("click", () => flipCard("a"));
-  checkB.addEventListener("click", () => flipCard("b"));
-  closeA.addEventListener("click", () => closeCard("a"));
-  closeB.addEventListener("click", () => closeCard("b"));
+  frontA.addEventListener("click", (e) => {
+    e.stopPropagation();
+    selectAnswer("a");
+  });
+  frontB.addEventListener("click", (e) => {
+    e.stopPropagation();
+    selectAnswer("b");
+  });
+  checkA.addEventListener("click", (e) => {
+    e.stopPropagation();
+    flipCard("a");
+  });
+  checkB.addEventListener("click", (e) => {
+    e.stopPropagation();
+    flipCard("b");
+  });
+  closeA.addEventListener("click", (e) => {
+    e.stopPropagation();
+    closeCard("a");
+  });
+  closeB.addEventListener("click", (e) => {
+    e.stopPropagation();
+    closeCard("b");
+  });
   nextBtn.addEventListener("click", loadQuestion);
 
   // Start
