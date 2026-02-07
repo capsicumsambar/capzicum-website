@@ -141,7 +141,7 @@ document.addEventListener("DOMContentLoaded", function () {
     questionNumber = 0;
     askedQuestionIds = [];
     scoreEl.textContent = "0";
-    currentQuestionEl.textContent = "1";
+    // currentQuestionEl.textContent = "1";
     endScreen.classList.remove("visible");
     nextBtn.textContent = "Next Question →";
     loadQuestion();
@@ -193,7 +193,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       currentQuestion = data.question;
       questionNumber++;
-      currentQuestionEl.textContent = questionNumber;
+      // currentQuestionEl.textContent = questionNumber;
 
       // Track asked questions to avoid repeats (if API supports it later)
       askedQuestionIds.push(currentQuestion.id);
