@@ -5,7 +5,7 @@ let answered = false;
 let cardAFlipped = false;
 let cardBFlipped = false;
 let questionNumber = 0;
-const TOTAL_QUESTIONS = 10;
+// const TOTAL_QUESTIONS = 10;
 let askedQuestionIds = [];
 
 const API_URL = "https://capsicum.pythonanywhere.com/game/question";
@@ -148,11 +148,11 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   async function loadQuestion() {
-    // Check if game is over
-    if (questionNumber >= TOTAL_QUESTIONS) {
-      showEndScreen();
-      return;
-    }
+    // // Check if game is over
+    // if (questionNumber >= TOTAL_QUESTIONS) {
+    //   showEndScreen();
+    //   return;
+    // }
 
     answered = false;
     cardAFlipped = false;
