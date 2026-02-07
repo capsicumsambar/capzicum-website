@@ -39,18 +39,18 @@ document.addEventListener("DOMContentLoaded", function () {
   const resultExplanation = document.getElementById("result-explanation");
   const nextBtn = document.getElementById("next-btn");
   const scoreEl = document.getElementById("score");
-  const currentQuestionEl = document.getElementById("current-question");
-  const totalQuestionsEl = document.getElementById("total-questions");
-  const endScreen = document.getElementById("end-screen");
-  const finalScoreEl = document.getElementById("final-score");
-  const finalTotalEl = document.getElementById("final-total");
-  const endMessageEl = document.getElementById("end-message");
-  const endEmojiEl = document.getElementById("end-emoji");
-  const playAgainBtn = document.getElementById("play-again-btn");
+  // const currentQuestionEl = document.getElementById("current-question");
+  // const totalQuestionsEl = document.getElementById("total-questions");
+  // const endScreen = document.getElementById("end-screen");
+  // const finalScoreEl = document.getElementById("final-score");
+  // const finalTotalEl = document.getElementById("final-total");
+  // const endMessageEl = document.getElementById("end-message");
+  // const endEmojiEl = document.getElementById("end-emoji");
+  // const playAgainBtn = document.getElementById("play-again-btn");
 
   // Set total questions display
-  totalQuestionsEl.textContent = TOTAL_QUESTIONS;
-  finalTotalEl.textContent = TOTAL_QUESTIONS;
+  // totalQuestionsEl.textContent = TOTAL_QUESTIONS;
+  // finalTotalEl.textContent = TOTAL_QUESTIONS;
 
   function flipCard(choice) {
     if (answered) return;
