@@ -1,13 +1,16 @@
 // Game State
+let score = 0;
 let currentQuestion = null;
 let answered = false;
 let cardAFlipped = false;
 let cardBFlipped = false;
-let recentQuestions = []; // Track recent to avoid repeats
-const RECENT_LIMIT = 5; // Don't repeat within last 5 questions
+let questionNumber = 0;
+const TOTAL_QUESTIONS = 10;
+let askedQuestionIds = [];
 
-const API_BASE = "https://capsicum.pythonanywhere.com";
+const API_URL = "https://capsicum.pythonanywhere.com/game/question";
 
+// Wait for DOM to be ready
 document.addEventListener("DOMContentLoaded", function () {
   // DOM Elements
   const loadingEl = document.getElementById("loading");
@@ -35,6 +38,19 @@ document.addEventListener("DOMContentLoaded", function () {
   const resultTitle = document.getElementById("result-title");
   const resultExplanation = document.getElementById("result-explanation");
   const nextBtn = document.getElementById("next-btn");
+  const scoreEl = document.getElementById("score");
+  const currentQuestionEl = document.getElementById("current-question");
+  const totalQuestionsEl = document.getElementById("total-questions");
+  const endScreen = document.getElementById("end-screen");
+  const finalScoreEl = document.getElementById("final-score");
+  const finalTotalEl = document.getElementById("final-total");
+  const endMessageEl = document.getElementById("end-message");
+  const endEmojiEl = document.getElementById("end-emoji");
+  const playAgainBtn = document.getElementById("play-again-btn");
+
+  // Set total questions display
+  totalQuestionsEl.textContent = TOTAL_QUESTIONS;
+  finalTotalEl.textContent = TOTAL_QUESTIONS;
 
   function flipCard(choice) {
     if (answered) return;
@@ -60,9 +76,13 @@ document.addEventListener("DOMContentLoaded", function () {
     if (answered || isFlipped) return;
 
     answered = true;
-
     const wrapper = choice === "a" ? wrapperA : wrapperB;
     const isCorrect = choice === currentQuestion.correct_answer;
+
+    if (isCorrect) {
+      score++;
+      scoreEl.textContent = score;
+    }
 
     wrapperA.classList.add("disabled");
     wrapperB.classList.add("disabled");
@@ -78,10 +98,62 @@ document.addEventListener("DOMContentLoaded", function () {
     resultBox.classList.add("visible", isCorrect ? "correct" : "incorrect");
     resultTitle.textContent = isCorrect ? "✓ Correct!" : "✗ Incorrect";
     resultExplanation.textContent = currentQuestion.explanation;
+
+    // Check if game is over
+    if (questionNumber >= TOTAL_QUESTIONS) {
+      nextBtn.textContent = "See Results →";
+    }
     nextBtn.classList.add("visible");
   }
 
+  function showEndScreen() {
+    gameContentEl.style.display = "none";
+    loadingEl.style.display = "none";
+    endScreen.classList.add("visible");
+
+    finalScoreEl.textContent = score;
+
+    // Set message based on score
+    const percentage = (score / TOTAL_QUESTIONS) * 100;
+    if (percentage === 100) {
+      endEmojiEl.textContent = "🏆";
+      endMessageEl.textContent = "Perfect score! You're a UPF expert!";
+    } else if (percentage >= 80) {
+      endEmojiEl.textContent = "🌟";
+      endMessageEl.textContent = "Excellent! You really know your ingredients!";
+    } else if (percentage >= 60) {
+      endEmojiEl.textContent = "👍";
+      endMessageEl.textContent =
+        "Good job! You're learning to spot ultra-processed foods.";
+    } else if (percentage >= 40) {
+      endEmojiEl.textContent = "📚";
+      endMessageEl.textContent =
+        "Keep learning! Check ingredient labels when you shop.";
+    } else {
+      endEmojiEl.textContent = "💪";
+      endMessageEl.textContent =
+        "Don't give up! Ultra-processed foods can be tricky to spot.";
+    }
+  }
+
+  function resetGame() {
+    score = 0;
+    questionNumber = 0;
+    askedQuestionIds = [];
+    scoreEl.textContent = "0";
+    currentQuestionEl.textContent = "1";
+    endScreen.classList.remove("visible");
+    nextBtn.textContent = "Next Question →";
+    loadQuestion();
+  }
+
   async function loadQuestion() {
+    // Check if game is over
+    if (questionNumber >= TOTAL_QUESTIONS) {
+      showEndScreen();
+      return;
+    }
+
     answered = false;
     cardAFlipped = false;
     cardBFlipped = false;
@@ -111,19 +183,8 @@ document.addEventListener("DOMContentLoaded", function () {
     cardB.classList.remove("flipped");
 
     try {
-      // Keep fetching until we get a non-recent question (max 10 tries)
-      let attempts = 0;
-      let data;
-
-      do {
-        const response = await fetch(API_BASE + "/game/question");
-        data = await response.json();
-        attempts++;
-      } while (
-        data.success &&
-        recentQuestions.includes(data.question.id) &&
-        attempts < 10
-      );
+      const response = await fetch(API_URL);
+      const data = await response.json();
 
       if (!data.success) {
         loadingEl.textContent = "Error loading question. Please refresh.";
@@ -131,16 +192,17 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       currentQuestion = data.question;
+      questionNumber++;
+      currentQuestionEl.textContent = questionNumber;
 
-      // Track recent questions
-      recentQuestions.push(currentQuestion.id);
-      if (recentQuestions.length > RECENT_LIMIT) {
-        recentQuestions.shift();
-      }
+      // Track asked questions to avoid repeats (if API supports it later)
+      askedQuestionIds.push(currentQuestion.id);
 
       questionTextEl.textContent = currentQuestion.text;
-      imageA.src = API_BASE + currentQuestion.product_a.image;
-      imageB.src = API_BASE + currentQuestion.product_b.image;
+      imageA.src =
+        "https://capsicum.pythonanywhere.com" + currentQuestion.product_a.image;
+      imageB.src =
+        "https://capsicum.pythonanywhere.com" + currentQuestion.product_b.image;
       nameA.textContent = currentQuestion.product_a.name;
       nameB.textContent = currentQuestion.product_b.name;
       backNameA.textContent = currentQuestion.product_a.name;
@@ -183,6 +245,7 @@ document.addEventListener("DOMContentLoaded", function () {
     closeCard("b");
   });
   nextBtn.addEventListener("click", loadQuestion);
+  playAgainBtn.addEventListener("click", resetGame);
 
   // Start
   loadQuestion();

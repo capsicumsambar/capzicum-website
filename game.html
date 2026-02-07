@@ -2,493 +2,338 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, user-scalable=no"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>UPF Game - Capzicum</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
     <style>
       * {
+        box-sizing: border-box;
         margin: 0;
         padding: 0;
-        box-sizing: border-box;
-        -webkit-tap-highlight-color: transparent;
       }
-
       body {
         font-family:
-          "Inter",
-          -apple-system,
-          BlinkMacSystemFont,
-          sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: #f5f5f5;
         min-height: 100vh;
-        min-height: -webkit-fill-available;
-        padding: 12px;
-        padding-top: env(safe-area-inset-top, 12px);
-        padding-bottom: env(safe-area-inset-bottom, 12px);
       }
-
       .game-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
         max-width: 500px;
         margin: 0 auto;
       }
-
-      /* Header */
-      .header {
+      .game-header {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        margin-bottom: 16px;
+        justify-content: space-between;
+        width: 100%;
+        margin-bottom: 24px;
       }
-
-      .back-btn {
-        color: white;
+      .back-link {
         text-decoration: none;
-        font-size: 14px;
-        opacity: 0.9;
-        padding: 8px 0;
+        color: #2e7d6f;
+        font-size: 1rem;
+        font-weight: 500;
       }
-
-      /* Loading */
-      #loading {
-        text-align: center;
+      .score-display {
+        background: #2e7d6f;
         color: white;
-        padding: 60px 20px;
-        font-size: 16px;
-      }
-
-      .spinner {
-        width: 40px;
-        height: 40px;
-        border: 3px solid rgba(255, 255, 255, 0.3);
-        border-top-color: white;
-        border-radius: 50%;
-        animation: spin 0.8s linear infinite;
-        margin: 0 auto 16px;
-      }
-
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
-      }
-
-      /* Game Content */
-      #game-content {
-        display: none;
-        flex-direction: column;
-        gap: 16px;
-      }
-
-      .question-text {
-        color: white;
-        font-size: 20px;
+        padding: 10px 20px;
+        border-radius: 25px;
         font-weight: 600;
+      }
+      .question-text {
+        font-size: 1.5rem;
         text-align: center;
-        padding: 8px 0;
-        line-height: 1.3;
+        color: #333;
+        margin-bottom: 28px;
+        font-weight: 600;
       }
-
-      /* Cards Container */
-      .cards-container {
+      .products-row {
         display: flex;
-        gap: 12px;
-        justify-content: center;
+        gap: 16px;
+        width: 100%;
+        margin-bottom: 24px;
       }
-
-      /* Card Wrapper */
       .card-wrapper {
         flex: 1;
-        max-width: 220px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .card-container {
+        width: 100%;
         perspective: 1000px;
-        cursor: pointer;
-        transition:
-          transform 0.2s,
-          opacity 0.3s;
+        margin-bottom: 8px;
       }
-
-      .card-wrapper:active:not(.disabled) {
-        transform: scale(0.98);
-      }
-
-      .card-wrapper.disabled {
-        pointer-events: none;
-      }
-
-      .card-wrapper.selected.correct {
-        filter: drop-shadow(0 0 20px rgba(34, 197, 94, 0.8));
-      }
-
-      .card-wrapper.selected.incorrect {
-        filter: drop-shadow(0 0 20px rgba(239, 68, 68, 0.8));
-      }
-
-      .card-wrapper.reveal-correct {
-        filter: drop-shadow(0 0 20px rgba(34, 197, 94, 0.6));
-      }
-
-      /* Card */
-      .card {
+      .product-card {
         position: relative;
         width: 100%;
-        aspect-ratio: 0.75;
-        transition: transform 0.6s;
+        height: 280px;
         transform-style: preserve-3d;
+        transition: transform 0.6s ease;
       }
-
-      .card.flipped {
+      .product-card.flipped {
         transform: rotateY(180deg);
       }
-
       .card-front,
       .card-back {
         position: absolute;
         width: 100%;
         height: 100%;
         backface-visibility: hidden;
+        border: 3px solid #e0e0e0;
         border-radius: 16px;
-        overflow: hidden;
         background: white;
         display: flex;
         flex-direction: column;
+        align-items: center;
+        padding: 16px;
+        transition:
+          border-color 0.3s,
+          background-color 0.3s;
       }
-
+      .card-front {
+        cursor: pointer;
+        justify-content: center;
+      }
       .card-back {
         transform: rotateY(180deg);
-        padding: 12px;
+        justify-content: flex-start;
       }
-
-      /* Card Front */
+      .card-wrapper:not(.disabled):not(.is-flipped) .card-front:hover {
+        border-color: #2e7d6f;
+        box-shadow: 0 4px 12px rgba(46, 125, 111, 0.15);
+      }
+      .card-wrapper.selected.correct .card-front {
+        border-color: #4caf50;
+        background: #e8f5e9;
+      }
+      .card-wrapper.selected.incorrect .card-front {
+        border-color: #f44336;
+        background: #ffebee;
+      }
+      .card-wrapper.reveal-correct .card-front {
+        border-color: #4caf50;
+        background: #e8f5e9;
+      }
       .product-image {
         width: 100%;
-        height: 60%;
-        object-fit: cover;
-        background: #f3f4f6;
+        height: 120px;
+        object-fit: contain;
+        border-radius: 8px;
+        margin-bottom: 12px;
+        background: #fafafa;
       }
-
-      .card-info {
-        padding: 10px;
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-      }
-
       .product-name {
         font-weight: 600;
-        font-size: 13px;
-        color: #1f2937;
-        line-height: 1.2;
-        margin-bottom: 4px;
-      }
-
-      .tap-hint {
-        font-size: 11px;
-        color: #9ca3af;
-      }
-
-      .check-btn {
-        background: #f3f4f6;
-        border: none;
-        padding: 8px;
-        border-radius: 8px;
-        font-size: 11px;
-        color: #6b7280;
-        cursor: pointer;
-        transition: background 0.2s;
-        margin-top: 6px;
-      }
-
-      .check-btn:active {
-        background: #e5e7eb;
-      }
-
-      /* Card Back */
-      .back-title {
-        font-weight: 600;
-        font-size: 12px;
-        color: #1f2937;
+        font-size: 0.95rem;
+        color: #333;
+        text-align: center;
         margin-bottom: 8px;
       }
-
-      .ingredients-text {
-        font-size: 10px;
-        color: #4b5563;
-        line-height: 1.4;
-        flex: 1;
-        overflow-y: auto;
+      .tap-hint {
+        font-size: 0.75rem;
+        color: #999;
       }
-
-      .close-btn {
-        background: #1f2937;
-        color: white;
+      .check-ingredients-link {
+        background: none;
         border: none;
-        padding: 10px;
-        border-radius: 8px;
-        font-size: 12px;
-        font-weight: 500;
+        color: #888;
+        font-size: 0.7rem;
         cursor: pointer;
-        margin-top: 8px;
+        text-decoration: underline;
+        padding: 4px 0;
       }
-
-      /* Result Box */
-      .result-box {
-        background: white;
+      .check-ingredients-link:hover {
+        color: #2e7d6f;
+      }
+      .card-wrapper.disabled .check-ingredients-link,
+      .card-wrapper.is-flipped .check-ingredients-link {
+        display: none;
+      }
+      .back-label {
+        font-weight: 600;
+        font-size: 1rem;
+        color: #2e7d6f;
+        margin-bottom: 10px;
+        width: 100%;
+      }
+      .ingredients-text {
+        font-size: 0.7rem;
+        color: #555;
+        line-height: 1.5;
+        overflow-y: auto;
+        flex: 1;
+        width: 100%;
+      }
+      .back-product-name {
+        font-size: 0.75rem;
+        color: #888;
+        margin-top: 8px;
+        text-align: center;
+      }
+      .close-btn {
+        background: #2e7d6f;
+        border: none;
+        color: white;
+        padding: 6px 16px;
         border-radius: 16px;
-        padding: 16px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 10px;
+      }
+      .result-box {
+        width: 100%;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 20px;
         text-align: center;
         opacity: 0;
-        transform: translateY(20px);
-        transition: all 0.3s;
+        transform: translateY(-10px);
+        transition:
+          opacity 0.3s,
+          transform 0.3s;
         pointer-events: none;
       }
-
       .result-box.visible {
         opacity: 1;
         transform: translateY(0);
         pointer-events: auto;
       }
-
-      .result-box.correct .result-title {
-        color: #16a34a;
+      .result-box.correct {
+        background: #e8f5e9;
+        border: 2px solid #a5d6a7;
       }
-
-      .result-box.incorrect .result-title {
-        color: #dc2626;
+      .result-box.incorrect {
+        background: #ffebee;
+        border: 2px solid #ef9a9a;
       }
-
       .result-title {
-        font-size: 20px;
+        font-size: 1.3rem;
         font-weight: 700;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
       }
-
+      .result-box.correct .result-title {
+        color: #2e7d32;
+      }
+      .result-box.incorrect .result-title {
+        color: #c62828;
+      }
       .result-explanation {
-        font-size: 14px;
-        color: #4b5563;
+        font-size: 0.95rem;
+        color: #555;
         line-height: 1.5;
       }
-
-      /* Next Button */
       .next-btn {
-        background: #1f2937;
+        background: #2e7d6f;
         color: white;
         border: none;
-        padding: 16px 32px;
-        border-radius: 12px;
-        font-size: 16px;
+        padding: 16px 40px;
+        border-radius: 30px;
+        font-size: 1.1rem;
         font-weight: 600;
         cursor: pointer;
-        width: 100%;
         opacity: 0;
-        transform: translateY(10px);
-        transition: all 0.3s;
         pointer-events: none;
       }
-
       .next-btn.visible {
         opacity: 1;
-        transform: translateY(0);
         pointer-events: auto;
       }
-
-      .next-btn:active {
-        transform: scale(0.98);
-      }
-
-      /* End Game Screen */
-      #end-screen {
-        display: none;
+      .loading {
         text-align: center;
-        color: white;
-        padding: 40px 20px;
+        color: #666;
+        padding: 60px 20px;
       }
-
-      #end-screen.visible {
-        display: block;
+      #game-content {
+        display: none;
+        width: 100%;
+        flex-direction: column;
+        align-items: center;
       }
-
-      .end-emoji {
-        font-size: 64px;
-        margin-bottom: 20px;
-      }
-
-      .end-title {
-        font-size: 28px;
-        font-weight: 700;
-        margin-bottom: 12px;
-      }
-
-      .end-score {
-        font-size: 48px;
-        font-weight: 700;
-        margin-bottom: 8px;
-      }
-
-      .end-subtitle {
-        font-size: 16px;
-        opacity: 0.9;
-        margin-bottom: 32px;
-      }
-
-      .end-message {
-        font-size: 18px;
-        margin-bottom: 32px;
-        line-height: 1.5;
-      }
-
-      .play-again-btn {
-        background: white;
-        color: #764ba2;
-        border: none;
-        padding: 16px 48px;
-        border-radius: 12px;
-        font-size: 18px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: transform 0.2s;
-      }
-
-      .play-again-btn:active {
-        transform: scale(0.98);
-      }
-
-      /* Mobile Optimizations */
-      @media (max-width: 400px) {
-        .question-text {
-          font-size: 18px;
-        }
-
-        .card-wrapper {
-          max-width: 165px;
-        }
-
-        .product-name {
-          font-size: 12px;
-        }
-
-        .ingredients-text {
-          font-size: 9px;
-        }
-      }
-
-      @media (max-height: 700px) {
-        .card {
-          aspect-ratio: 0.8;
-        }
-
-        .product-image {
-          height: 55%;
-        }
+      .card-wrapper.disabled .card-front {
+        cursor: default;
       }
     </style>
   </head>
   <body>
-    <div class="game-container">
-      <!-- Header -->
-      <div class="header">
-        <a href="index.html" class="back-btn">← Back</a>
-          </div>
-          <div class="score-box">Score: <span id="score">0</span></div>
-        </div>
+    <main class="game-container">
+      <div class="game-header">
+        <a href="index.html" class="back-link">← Back</a>
+        <div class="score-display">Score: <span id="score">0</span></div>
       </div>
 
-      <!-- Loading -->
-      <div id="loading">
-        <div class="spinner"></div>
-        Loading question...
-      </div>
+      <div id="loading" class="loading">Loading question...</div>
 
-      <!-- Game Content -->
       <div id="game-content">
-        <div class="question-text" id="question-text"></div>
+        <p id="question-text" class="question-text"></p>
 
-        <div class="cards-container">
-          <!-- Card A -->
+        <div class="products-row">
           <div class="card-wrapper" id="wrapper-a">
-            <div class="card" id="card-a">
-              <div class="card-front" id="front-a">
-                <img
-                  class="product-image"
-                  id="image-a"
-                  src=""
-                  alt="Product A"
-                />
-                <div class="card-info">
-                  <div>
-                    <div class="product-name" id="name-a"></div>
-                    <div class="tap-hint">Tap to select</div>
-                  </div>
-                  <button class="check-btn" id="check-a">
-                    Check ingredients
-                  </button>
+            <div class="card-container">
+              <div class="product-card" id="card-a">
+                <div class="card-front" id="front-a">
+                  <img
+                    id="image-a"
+                    class="product-image"
+                    src=""
+                    alt="Product A"
+                  />
+                  <div id="name-a" class="product-name"></div>
+                  <div class="tap-hint">Tap to select</div>
+                </div>
+                <div class="card-back">
+                  <div class="back-label">Ingredients:</div>
+                  <div id="ingredients-a" class="ingredients-text"></div>
+                  <div id="back-name-a" class="back-product-name"></div>
+                  <button class="close-btn" id="close-a">Close</button>
                 </div>
               </div>
-              <div class="card-back">
-                <div class="back-title" id="back-name-a"></div>
-                <div class="ingredients-text" id="ingredients-a"></div>
-                <button class="close-btn" id="close-a">Close</button>
-              </div>
             </div>
+            <button class="check-ingredients-link" id="check-a">
+              Check ingredients
+            </button>
           </div>
 
-          <!-- Card B -->
           <div class="card-wrapper" id="wrapper-b">
-            <div class="card" id="card-b">
-              <div class="card-front" id="front-b">
-                <img
-                  class="product-image"
-                  id="image-b"
-                  src=""
-                  alt="Product B"
-                />
-                <div class="card-info">
-                  <div>
-                    <div class="product-name" id="name-b"></div>
-                    <div class="tap-hint">Tap to select</div>
-                  </div>
-                  <button class="check-btn" id="check-b">
-                    Check ingredients
-                  </button>
+            <div class="card-container">
+              <div class="product-card" id="card-b">
+                <div class="card-front" id="front-b">
+                  <img
+                    id="image-b"
+                    class="product-image"
+                    src=""
+                    alt="Product B"
+                  />
+                  <div id="name-b" class="product-name"></div>
+                  <div class="tap-hint">Tap to select</div>
+                </div>
+                <div class="card-back">
+                  <div class="back-label">Ingredients:</div>
+                  <div id="ingredients-b" class="ingredients-text"></div>
+                  <div id="back-name-b" class="back-product-name"></div>
+                  <button class="close-btn" id="close-b">Close</button>
                 </div>
               </div>
-              <div class="card-back">
-                <div class="back-title" id="back-name-b"></div>
-                <div class="ingredients-text" id="ingredients-b"></div>
-                <button class="close-btn" id="close-b">Close</button>
-              </div>
             </div>
+            <button class="check-ingredients-link" id="check-b">
+              Check ingredients
+            </button>
           </div>
         </div>
 
-        <!-- Result -->
-        <div class="result-box" id="result-box">
+        <div id="result-box" class="result-box">
           <div class="result-title" id="result-title"></div>
           <div class="result-explanation" id="result-explanation"></div>
         </div>
 
-        <!-- Next Button -->
-        <button class="next-btn" id="next-btn">Next Question →</button>
+        <button id="next-btn" class="next-btn">Next Question →</button>
       </div>
-
-      <!-- End Screen -->
-      <div id="end-screen">
-        <div class="end-emoji" id="end-emoji">🎉</div>
-        <div class="end-title">Game Complete!</div>
-        <div class="end-score">
-          <span id="final-score">0</span>/<span id="final-total">10</span>
-        </div>
-        <div class="end-subtitle">questions correct</div>
-        <div class="end-message" id="end-message"></div>
-        <button class="play-again-btn" id="play-again-btn">Play Again</button>
-      </div>
-    </div>
+    </main>
 
     <script src="game.js"></script>
   </body>
