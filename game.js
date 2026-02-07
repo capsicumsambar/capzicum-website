@@ -1,11 +1,8 @@
 // Game State
-let score = 0;
 let currentQuestion = null;
 let answered = false;
 let cardAFlipped = false;
 let cardBFlipped = false;
-let questionNumber = 0;
-// const TOTAL_QUESTIONS = 10;
 let askedQuestionIds = [];
 
 const API_URL = "https://capsicum.pythonanywhere.com/game/question";
@@ -38,19 +35,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const resultTitle = document.getElementById("result-title");
   const resultExplanation = document.getElementById("result-explanation");
   const nextBtn = document.getElementById("next-btn");
-  const scoreEl = document.getElementById("score");
-  // const currentQuestionEl = document.getElementById("current-question");
-  // const totalQuestionsEl = document.getElementById("total-questions");
-  // const endScreen = document.getElementById("end-screen");
-  // const finalScoreEl = document.getElementById("final-score");
-  // const finalTotalEl = document.getElementById("final-total");
-  // const endMessageEl = document.getElementById("end-message");
-  // const endEmojiEl = document.getElementById("end-emoji");
-  // const playAgainBtn = document.getElementById("play-again-btn");
-
-  // Set total questions display
-  // totalQuestionsEl.textContent = TOTAL_QUESTIONS;
-  // finalTotalEl.textContent = TOTAL_QUESTIONS;
 
   function flipCard(choice) {
     if (answered) return;
@@ -79,11 +63,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const wrapper = choice === "a" ? wrapperA : wrapperB;
     const isCorrect = choice === currentQuestion.correct_answer;
 
-    if (isCorrect) {
-      score++;
-      scoreEl.textContent = score;
-    }
-
     wrapperA.classList.add("disabled");
     wrapperB.classList.add("disabled");
     wrapper.classList.add("selected", isCorrect ? "correct" : "incorrect");
@@ -99,61 +78,10 @@ document.addEventListener("DOMContentLoaded", function () {
     resultTitle.textContent = isCorrect ? "✓ Correct!" : "✗ Incorrect";
     resultExplanation.textContent = currentQuestion.explanation;
 
-    // // Check if game is over
-    // if (questionNumber >= TOTAL_QUESTIONS) {
-    //   nextBtn.textContent = "See Results →";
-    // }
     nextBtn.classList.add("visible");
   }
 
-  // function showEndScreen() {
-  //   gameContentEl.style.display = "none";
-  //   loadingEl.style.display = "none";
-  //   endScreen.classList.add("visible");
-
-  //   finalScoreEl.textContent = score;
-
-  //   // Set message based on score
-  //   const percentage = (score / TOTAL_QUESTIONS) * 100;
-  //   if (percentage === 100) {
-  //     endEmojiEl.textContent = "🏆";
-  //     endMessageEl.textContent = "Perfect score! You're a UPF expert!";
-  //   } else if (percentage >= 80) {
-  //     endEmojiEl.textContent = "🌟";
-  //     endMessageEl.textContent = "Excellent! You really know your ingredients!";
-  //   } else if (percentage >= 60) {
-  //     endEmojiEl.textContent = "👍";
-  //     endMessageEl.textContent =
-  //       "Good job! You're learning to spot ultra-processed foods.";
-  //   } else if (percentage >= 40) {
-  //     endEmojiEl.textContent = "📚";
-  //     endMessageEl.textContent =
-  //       "Keep learning! Check ingredient labels when you shop.";
-  //   } else {
-  //     endEmojiEl.textContent = "💪";
-  //     endMessageEl.textContent =
-  //       "Don't give up! Ultra-processed foods can be tricky to spot.";
-  //   }
-  // }
-
-  function resetGame() {
-    score = 0;
-    questionNumber = 0;
-    askedQuestionIds = [];
-    scoreEl.textContent = "0";
-    // currentQuestionEl.textContent = "1";
-    endScreen.classList.remove("visible");
-    nextBtn.textContent = "Next Question →";
-    loadQuestion();
-  }
-
   async function loadQuestion() {
-    // // Check if game is over
-    // if (questionNumber >= TOTAL_QUESTIONS) {
-    //   showEndScreen();
-    //   return;
-    // }
-
     answered = false;
     cardAFlipped = false;
     cardBFlipped = false;
@@ -192,8 +120,6 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       currentQuestion = data.question;
-      questionNumber++;
-      // currentQuestionEl.textContent = questionNumber;
 
       // Track asked questions to avoid repeats (if API supports it later)
       askedQuestionIds.push(currentQuestion.id);
@@ -245,7 +171,6 @@ document.addEventListener("DOMContentLoaded", function () {
     closeCard("b");
   });
   nextBtn.addEventListener("click", loadQuestion);
-  // playAgainBtn.addEventListener("click", resetGame);
 
   // Start
   loadQuestion();
