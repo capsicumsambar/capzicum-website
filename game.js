@@ -99,42 +99,42 @@ document.addEventListener("DOMContentLoaded", function () {
     resultTitle.textContent = isCorrect ? "✓ Correct!" : "✗ Incorrect";
     resultExplanation.textContent = currentQuestion.explanation;
 
-    // Check if game is over
-    if (questionNumber >= TOTAL_QUESTIONS) {
-      nextBtn.textContent = "See Results →";
-    }
+    // // Check if game is over
+    // if (questionNumber >= TOTAL_QUESTIONS) {
+    //   nextBtn.textContent = "See Results →";
+    // }
     nextBtn.classList.add("visible");
   }
 
-  function showEndScreen() {
-    gameContentEl.style.display = "none";
-    loadingEl.style.display = "none";
-    endScreen.classList.add("visible");
+  // function showEndScreen() {
+  //   gameContentEl.style.display = "none";
+  //   loadingEl.style.display = "none";
+  //   endScreen.classList.add("visible");
 
-    finalScoreEl.textContent = score;
+  //   finalScoreEl.textContent = score;
 
-    // Set message based on score
-    const percentage = (score / TOTAL_QUESTIONS) * 100;
-    if (percentage === 100) {
-      endEmojiEl.textContent = "🏆";
-      endMessageEl.textContent = "Perfect score! You're a UPF expert!";
-    } else if (percentage >= 80) {
-      endEmojiEl.textContent = "🌟";
-      endMessageEl.textContent = "Excellent! You really know your ingredients!";
-    } else if (percentage >= 60) {
-      endEmojiEl.textContent = "👍";
-      endMessageEl.textContent =
-        "Good job! You're learning to spot ultra-processed foods.";
-    } else if (percentage >= 40) {
-      endEmojiEl.textContent = "📚";
-      endMessageEl.textContent =
-        "Keep learning! Check ingredient labels when you shop.";
-    } else {
-      endEmojiEl.textContent = "💪";
-      endMessageEl.textContent =
-        "Don't give up! Ultra-processed foods can be tricky to spot.";
-    }
-  }
+  //   // Set message based on score
+  //   const percentage = (score / TOTAL_QUESTIONS) * 100;
+  //   if (percentage === 100) {
+  //     endEmojiEl.textContent = "🏆";
+  //     endMessageEl.textContent = "Perfect score! You're a UPF expert!";
+  //   } else if (percentage >= 80) {
+  //     endEmojiEl.textContent = "🌟";
+  //     endMessageEl.textContent = "Excellent! You really know your ingredients!";
+  //   } else if (percentage >= 60) {
+  //     endEmojiEl.textContent = "👍";
+  //     endMessageEl.textContent =
+  //       "Good job! You're learning to spot ultra-processed foods.";
+  //   } else if (percentage >= 40) {
+  //     endEmojiEl.textContent = "📚";
+  //     endMessageEl.textContent =
+  //       "Keep learning! Check ingredient labels when you shop.";
+  //   } else {
+  //     endEmojiEl.textContent = "💪";
+  //     endMessageEl.textContent =
+  //       "Don't give up! Ultra-processed foods can be tricky to spot.";
+  //   }
+  // }
 
   function resetGame() {
     score = 0;
