@@ -245,7 +245,7 @@ document.addEventListener("DOMContentLoaded", function () {
     closeCard("b");
   });
   nextBtn.addEventListener("click", loadQuestion);
-  playAgainBtn.addEventListener("click", resetGame);
+  // playAgainBtn.addEventListener("click", resetGame);
 
   // Start
   loadQuestion();
